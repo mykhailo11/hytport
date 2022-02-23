@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="200dp"
+        android:height="200dp"
+        android:viewportWidth="200"
+        android:viewportHeight="200">
+    <!--group>
+        <clip-path android:pathData="M0.0 100.0 A100.0 100.0 0.0 0.0 1 200.0 100.0 A100.0 100.0 0.0 0.0 1 0.0 100.0z"/>
+        <path android:fillColor="#6573E3" android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0 L0.0 0.0z"/>
+        <path android:strokeWidth="20" android:strokeColor="#05277C" android:pathData="M0.0 0.0 L150.0 200.0"/>
+        <path android:strokeWidth="12" android:strokeColor="#5E0B3D" android:pathData="M30.0 0.0 L180.0 200.0"/>
+        <path android:strokeWidth="8" android:strokeColor="#97FADE" android:pathData="M80.0 0.0 L230.0 200.0"/>
+    </group>
+    <group android:pivotX="100.0" android:pivotY="100.0" android:scaleX="0.8" android:scaleY="0.8">
+        <clip-path android:pathData="M0.0 100.0 A100.0 100.0 0.0 0.0 1 200.0 100.0 A100.0 100.0 0.0 0.0 1 0.0 100.0z"/>
+        <group android:pivotX="100.0" android:pivotY="100.0" android:rotation="180.0">
+        <path android:fillColor="#20005C" android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0 L0.0 0.0z"/>
+        <path android:strokeWidth="20" android:strokeColor="#C80B4D" android:pathData="M0.0 0.0 L150.0 200.0"/>
+        <path android:strokeWidth="12" android:strokeColor="#7D2997" android:pathData="M30.0 0.0 L180.0 200.0"/>
+        <path android:strokeWidth="8" android:strokeColor="#275A63" android:pathData="M100.0 0.0 L250.0 200.0"/>
+        </group>
+        <group android:pivotX="100.0" android:pivotY="100.0" android:scaleX="0.5" android:scaleY="0.5" android:translateX="13.0">
+            <path android:strokeColor="#E1D463" android:fillColor="#85B55B" android:fillAlpha="0.4" android:strokeWidth="20" android:strokeLineCap="butt" android:strokeLineJoin="bevel" android:pathData="M0.0 0.0 L180.0 100.0 L0.0 200.0z"/>
+        </group>
+    </group-->
+    <path android:fillColor="@color/hyt_accent" android:pathData="M0.0 100.0 A100.0 100.0 0.0 0.0 1 200.0 100.0 A100.0 100.0 0.0 0.0 1 0.0 100.0"/>
+    <clip-path android:pathData="M10.0 100.0 A90.0 90.0 0.0 0.0 1 190.0 100.0 A90.0 90.0 0.0 0.0 1 10.0 100.0"/>
+    <path android:fillColor="@color/hyt_dark" android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0z"/>
+    <group android:pivotX="100.0" android:pivotY="100.0" android:scaleX="1.5" android:scaleY="1.5">
+        <path android:strokeWidth="8" android:strokeColor="@color/hyt_grey" android:pathData="M78.79 78.79 L157.56 0.0"/>
+        <path android:strokeWidth="8" android:strokeColor="@color/hyt_grey" android:pathData="M0.0 130.0 L100.0 130.0"/>
+        <path android:strokeWidth="8" android:strokeColor="@color/hyt_grey" android:pathData="M78.79 121.22 L121.22 78.79"/>
+        <path android:strokeWidth="8" android:strokeLineCap="round" android:strokeColor="@color/hyt_grey" android:pathData="M128.72 70.29 L134.57 64.43"/>
+        <path android:strokeWidth="8" android:strokeColor="@color/hyt_accent" android:pathData="M70.0 100.0 A30.0 30.0 0 0 1 130.0 100.0 A30.0 30.0 0 0 1 70.0 100.0z"/>
+    </group>
+</vector>
