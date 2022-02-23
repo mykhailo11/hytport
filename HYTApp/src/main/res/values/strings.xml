@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">BYMIHA</string>
+    <string name="vertex_shader">HYTCanvas.glsl</string>
+    <string name="fragment_shader">HYTView.glsl</string>
+    <string name="pulse_states">pulseStates</string>
+    <string name="balance_states">balanceStates</string>
+    <string name="absorb_states">absorbStates</string>
+</resources>
