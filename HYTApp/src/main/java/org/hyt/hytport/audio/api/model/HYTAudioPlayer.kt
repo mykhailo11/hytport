@@ -8,6 +8,10 @@ interface HYTAudioPlayer {
 
     interface HYTAudioPlayerAudit{
 
+        fun getId(): Int;
+
+        fun setId(id: Int): Unit;
+
         fun onReady(): Unit{}
 
         fun onPlay(audio: HYTAudioModel): Unit{}
