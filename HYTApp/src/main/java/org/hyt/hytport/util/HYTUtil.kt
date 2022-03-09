@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.util.Size
 
 class HYTUtil {
@@ -27,7 +28,11 @@ class HYTUtil {
                 return null;
             }
             return try{
-                resolver.loadThumbnail(path, Size(800, 800), null);
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P){
+                    resolver.loadThumbnail(path, Size(800, 800), null);
+                }else{
+                    return null;
+                }
             }catch (exception: Exception){
                 null;
             }
