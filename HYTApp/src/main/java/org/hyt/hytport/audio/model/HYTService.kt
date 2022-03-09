@@ -1,9 +1,14 @@
 package org.hyt.hytport.audio.model
 
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.media.session.MediaSession
+import android.media.session.PlaybackState
 import android.os.Binder
 import android.os.IBinder
 import android.widget.RemoteViews
@@ -18,9 +23,9 @@ import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
 import org.hyt.hytport.util.HYTUtil
 import java.util.*
 
-class HYTService: Service() {
+class HYTService : Service() {
 
-    companion object{
+    companion object {
 
         public val PREVIOUS: String = "org.hyt.hytport.PREVIOUS";
 
@@ -34,32 +39,50 @@ class HYTService: Service() {
 
     private lateinit var _player: HYTAudioPlayer;
 
-    private lateinit var _audioRepository: HYTAudioRepository;
+    private var _audioRepository: HYTAudioRepository? = null;
 
     private lateinit var _binder: HYTBinder;
+
+    private lateinit var _mediaSession: MediaSession;
 
     override fun onCreate() {
         super.onCreate();
         _binder = HYTBaseBinder();
         _player = HYTAudioPlayerFactory.getAudioPlayer(this);
-        /*_audioRepository = HYTAudioFactory.getRemoteAudioRepository(
-            "https://mocki.io",
-            mapOf(
-                Pair(HYTRemoteAudioRepository.Companion.HYTEndpoints.GET_ALL, "v1/20f1c423-b54f-4594-915b-567f8aa99491"),
-            ),
-            this
-        );*/
-        _audioRepository = HYTAudioFactory.getAudioRepository(contentResolver);
-        _audioRepository.getAllAudio { audios ->
-            audios.forEach { audio ->
-                _player.addNext(audio);
-            };
-            _player.next();
-        };
+        _mediaSession = MediaSession(this, "hyt_session");
+        _mediaSession.setCallback(object : MediaSession.Callback() {
+
+            override fun onPlay() {
+                _player.play();
+            }
+
+            override fun onPause() {
+                _player.pause();
+            }
+
+            override fun onSkipToNext() {
+                _player.next();
+            }
+
+            override fun onSkipToPrevious() {
+                _player.previous();
+            }
+
+        });
+        _mediaSession.setPlaybackState(
+            PlaybackState.Builder()
+                .setActions(
+                    PlaybackState.ACTION_PLAY or
+                            PlaybackState.ACTION_PAUSE or
+                            PlaybackState.ACTION_SKIP_TO_NEXT or
+                            PlaybackState.ACTION_SKIP_TO_PREVIOUS
+                )
+                .build()
+        )
         val notificationChannel: NotificationChannel = NotificationChannel(
             "hyt_channel",
             "HYT Channel",
-            NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_DEFAULT
         );
         notificationChannel.lightColor = Color.YELLOW;
         notificationChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC;
@@ -74,7 +97,6 @@ class HYTService: Service() {
             "hyt_channel"
         )
             .setSmallIcon(R.drawable.hyt_player_icon_200dp)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setColor(Color.YELLOW)
             .setCustomContentView(playerView)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -82,7 +104,7 @@ class HYTService: Service() {
         startForeground(100, notification);
     }
 
-    private fun _initViewIntents(playerView: RemoteViews): Unit{
+    private fun _initViewIntents(playerView: RemoteViews): Unit {
         playerView.setOnClickPendingIntent(
             R.id.hyt_player_previous,
             HYTUtil.wrapIntentForService(
@@ -110,13 +132,13 @@ class HYTService: Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent != null){
-            when (intent.action){
+        if (intent != null && intent.action != null) {
+            when (intent.action!!) {
                 PREVIOUS -> _player.previous();
                 PLAY -> {
-                    if (_player.isPlaying()){
+                    if (_player.isPlaying()) {
                         _player.pause();
-                    }else{
+                    } else {
                         _player.play();
                     }
                 }
@@ -129,10 +151,11 @@ class HYTService: Service() {
 
     override fun onDestroy() {
         _player.destroy();
+        _mediaSession.release();
         super.onDestroy();
     }
 
-    private inner class HYTBaseBinder: Binder(), HYTBinder{
+    private inner class HYTBaseBinder : Binder(), HYTBinder {
 
         override fun play(): HYTAudioModel {
             return _player.play();
@@ -178,13 +201,30 @@ class HYTService: Service() {
             _player.removeAudit(audit);
         }
 
+        override fun setRepository(repository: HYTAudioRepository) {
+            if (_audioRepository == null || _audioRepository!!.javaClass.canonicalName != repository.javaClass.canonicalName) {
+                _audioRepository = repository;
+                _audioRepository!!.getAllAudio { audios ->
+                    _player.queue().clear();
+                    audios.forEach { audio ->
+                        _player.addNext(audio);
+                    };
+                    _player.next();
+                };
+            }
+        }
+
+        override fun getRepository(): String? {
+            if (_audioRepository == null) {
+                return null;
+            }
+            return _audioRepository!!.javaClass.canonicalName;
+        }
+
     }
 
     override fun onBind(intent: Intent?): IBinder {
         return _binder;
     }
-
-
-
 
 }
