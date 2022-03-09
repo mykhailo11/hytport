@@ -17,7 +17,7 @@ class HYTBaseAudioModel: HYTAudioModel{
 
     private lateinit var _path: Uri;
 
-    private lateinit var _duration: String;
+    private var _duration: Long = 0L;
 
     override fun getId(): Long {
         return _id;
@@ -35,7 +35,7 @@ class HYTBaseAudioModel: HYTAudioModel{
         return _album;
     }
 
-    override fun getDuration(): String {
+    override fun getDuration(): Long {
         return _duration;
     }
 
@@ -55,7 +55,7 @@ class HYTBaseAudioModel: HYTAudioModel{
         _album = album;
     }
 
-    override fun setDuration(duration: String): Unit {
+    override fun setDuration(duration: Long): Unit {
         _duration = duration;
     }
 

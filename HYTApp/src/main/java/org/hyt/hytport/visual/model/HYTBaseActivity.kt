@@ -1,15 +1,15 @@
 package org.hyt.hytport.visual.model
 
-import android.content.ComponentName
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
+import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.model.HYTService
 
 abstract class HYTBaseActivity: AppCompatActivity() {
@@ -24,14 +24,28 @@ abstract class HYTBaseActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val preferences: SharedPreferences = getSharedPreferences(
+            resources.getString(R.string.preferences),
+            Context.MODE_PRIVATE
+        );
+        val preferenceName = resources.getString(R.string.preferences_permissions);
+        if (!preferences.getBoolean(preferenceName, false)) {
+            startActivityIfNeeded(Intent(this, HYTInit::class.java), 100);
+            finish();
+            return;
+        }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        window.navigationBarColor = getColor(R.color.hyt_transparent);
         supportActionBar?.hide();
         volumeControlStream = AudioManager.STREAM_MUSIC;
-        _connection = object : ServiceConnection{
+        _connection = object : ServiceConnection {
 
             override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                 _player = binder as HYTBinder;
                 _audit = _player.addAudit(_getAudit());
+                if (_player.getRepository() == null) {
+                    _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));
+                }
                 _bound = true;
             }
 

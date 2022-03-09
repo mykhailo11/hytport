@@ -2,10 +2,12 @@ package org.hyt.hytport.audio.model
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
+import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.model.HYTAudioRepository
 import org.hyt.hytport.audio.factory.HYTAudioFactory
@@ -73,20 +75,24 @@ class HYTRemoteAudioRepository public constructor(
                     val jsonAudio: JSONObject = json.getJSONObject(index);
                     audios.add(
                         HYTAudioFactory.getAudioModel().apply {
-                            setId(jsonAudio.optLong("id"));
-                            setTitle(jsonAudio.optString("name"));
+                            val id: Long = jsonAudio.optLong("id");
+                            setId(id);
+                            setTitle(jsonAudio.optString("title"));
                             setArtist(jsonAudio.optString("artist"));
                             setAlbum(jsonAudio.optString("album"));
-                            setDuration(jsonAudio.optString("duration"));
+                            setDuration(jsonAudio.optLong("duration"));
                             setAlbumPath(Uri.parse(jsonAudio.optString("albumPath")));
-                            setPath(Uri.parse(jsonAudio.optString("path")));
+                            setPath(Uri.parse("${_context.getString(R.string.remote_service_base)}/${id}"));
                         }
                     );
                 }
                 ready(audios);
             },
-            null
+            {
+                Log.e("http", it.toString());
+            }
         );
+        request.setShouldCache(false);
         _requestQueue.add(request);
     }
 

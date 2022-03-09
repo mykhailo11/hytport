@@ -7,9 +7,11 @@
     <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="hyt_accent">#2A2433</color>
+    <color name="hyt_text_dark">#786891</color>
     <color name="hyt_grey">#A6A56E</color>
     <color name="hyt_dark">#020215</color>
     <color name="hyt_press">#2BFFA4</color>
     <color name="hyt_player">#8E8E8E</color>
     <color name="hyt_destroy">#883A3A</color>
+    <color name="hyt_transparent">#00000000</color>
 </resources>

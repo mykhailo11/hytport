@@ -4,13 +4,11 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.audiofx.Visualizer
-import android.net.Uri
-import android.util.Log
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.model.HYTAudioPlayer
+import org.hyt.hytport.audio.factory.HYTAudioFactory
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
 
 class HYTBaseAudioPlayer public constructor(
@@ -168,24 +166,34 @@ class HYTBaseAudioPlayer public constructor(
         }
         _player.reset();
         _player.release();
-        _audits.forEach {
-            it.onDestroy(_queue.last);
+        if (_audits.isNotEmpty()){
+            _audits.forEach {
+                if (_queue.isEmpty()){
+                    it.onDestroy(HYTAudioFactory.getAudioModel());
+                }else{
+                    it.onDestroy(_queue.last);
+                }
+            }
         }
     }
 
     override fun addAudit(audit: HYTAudioPlayer.HYTAudioPlayerAudit): Int {
         _audits.add(audit);
-        audit.onReady();
         if (_player.isPlaying) {
+            audit.onReady();
             audit.onPlay(_queue.last);
         } else if (_ready) {
+            audit.onReady();
             audit.onPause(_queue.last);
         }
-        return _audits.indexOf(audit);
+        audit.setId(_audits.indexOf(audit));
+        return audit.getId();
     }
 
     override fun removeAudit(audit: Int) {
-        _audits.removeAt(audit);
+        _audits.removeIf {
+            it.getId() == audit;
+        }
     }
 
 }

@@ -14,7 +14,7 @@ interface HYTAudioModel {
 
     fun getAlbumPath(): Uri?;
 
-    fun getDuration(): String;
+    fun getDuration(): Long;
 
     fun setId(id: Long): Unit;
 
@@ -26,7 +26,7 @@ interface HYTAudioModel {
 
     fun setAlbumPath(album: Uri): Unit;
 
-    fun setDuration(duration: String): Unit;
+    fun setDuration(duration: Long): Unit;
 
     fun getPath(): Uri;
 

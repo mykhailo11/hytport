@@ -1,34 +1,26 @@
 package org.hyt.hytport.visual.model
 
-import android.media.AudioManager
 import android.opengl.GLSurfaceView
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.view.Window
 import androidx.constraintlayout.widget.ConstraintLayout
 import org.hyt.hytport.util.HYTMathUtil
 import org.hyt.hytport.util.HYTUtil
 import org.hyt.hytport.visual.api.model.HYTState
 import org.hyt.hytport.visual.factory.HYTStateFactory
-import android.Manifest;
 import android.animation.ValueAnimator
-import android.content.ComponentName
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.os.IBinder
 import android.view.MotionEvent
 import android.widget.*
 import androidx.core.animation.doOnEnd
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.model.HYTAudioPlayer
-import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.audio.model.HYTService
 import org.hyt.hytport.graphics.model.HYTCanvas
 import org.hyt.hytport.visual.util.HYTAnimationUtil
+import java.util.prefs.Preferences
 
 class HYTActivity : HYTBaseActivity() {
 
@@ -106,6 +98,18 @@ class HYTActivity : HYTBaseActivity() {
 
     override fun _getAudit(): HYTAudioPlayer.HYTAudioPlayerAudit {
         return object : HYTAudioPlayer.HYTAudioPlayerAudit {
+
+            override fun getId(): Int {
+                return _audit;
+            }
+
+            override fun setId(id: Int) {
+                _audit = id;
+            }
+
+            override fun onReady() {
+                super.onReady();
+            }
 
             override fun onPlay(audio: HYTAudioModel) {
                 _play.setImageResource(R.drawable.hyt_play_200dp);
@@ -233,7 +237,7 @@ class HYTActivity : HYTBaseActivity() {
             view.performClick();
         }
         _library.setOnClickListener {
-            startActivity(Intent(this, HYTLibrary::class.java));
+            startActivityIfNeeded(Intent(this, HYTLibrary::class.java), 100);
         }
     }
 
