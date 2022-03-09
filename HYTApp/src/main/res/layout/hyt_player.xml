@@ -3,7 +3,7 @@
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_height="match_parent"
               android:layout_width="match_parent" android:id="@+id/hyt_player" android:measureWithLargestChild="true"
->
+              android:padding="20dp">
     <ImageButton
             android:id="@+id/hyt_player_previous"
             android:rotation="180"

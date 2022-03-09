@@ -4,13 +4,14 @@
               xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="80dp"
-              android:id="@+id/hyt_item_container" app:layout_constrainedHeight="false">
+              android:id="@+id/hyt_item_container" app:layout_constrainedHeight="false" android:animationCache="false"
+>
 
     <ImageView
             android:id="@+id/hyt_item_album"
             android:scaleType="fitCenter" android:layout_height="match_parent"
             app:srcCompat="@drawable/hyt_empty_cover_200dp" android:layout_weight="1.0"
-            android:layout_width="0dp"/>
+            android:layout_width="0dp" android:padding="5dp"/>
     <LinearLayout
             android:orientation="vertical"
             android:id="@+id/hyt_item_data"
