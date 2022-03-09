@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.model.HYTAudioRepository
@@ -20,6 +21,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
+            MediaStore.Audio.Media.DATA
         );
 
         private val _QUERY__ID: String = "_id = ?";
@@ -40,7 +42,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         ready(_getAudio(
             null,
             null,
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            _getStorage()
         ));
     }
 
@@ -49,7 +51,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         ready(_getAudio(
             _QUERY__ID,
             parameters,
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            _getStorage()
         ).first());
     }
 
@@ -58,7 +60,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         ready(_getAudio(
             _QUERY_ARTIST,
             parameters,
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            _getStorage()
         ));
     }
 
@@ -67,8 +69,16 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         ready(_getAudio(
             _QUERY_ALBUM,
             parameters,
-            MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            _getStorage()
         ));
+    }
+
+    private fun _getStorage(): Uri{
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }else{
+            return MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        }
     }
 
     private fun _getAudio(
@@ -91,6 +101,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             val albumColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
             val albumIdColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
             val durationColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
+            val dataColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
             do {
                 val audio: HYTAudioModel = HYTAudioFactory.getAudioModel();
                 audio.setId(cursor.getLong(idColumn));
@@ -112,8 +123,12 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
                         )
                     );
                 }
-                audio.setDuration(cursor.getString(durationColumn));
-                audio.setPath(ContentUris.withAppendedId(storage, audio.getId()));
+                audio.setDuration(cursor.getLong(durationColumn));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+                    audio.setPath(Uri.parse("file://" + cursor.getString(dataColumn)));
+                }else{
+                    audio.setPath(ContentUris.withAppendedId(storage, audio.getId()));
+                }
                 items.add(audio);
             } while (cursor.moveToNext());
         }
