@@ -85,7 +85,6 @@ class HYTActivity : HYTBaseActivity() {
         _previous = findViewById(R.id.hyt_previous);
         _play = findViewById(R.id.hyt_play);
         _meta = findViewById(R.id.hyt_meta_container);
-        _library = findViewById(R.id.hyt_library_open);
         _initSurface(
             mapOf(
                 Pair(resources.getString(R.string.pulse_states), pulseStates),
@@ -157,14 +156,14 @@ class HYTActivity : HYTBaseActivity() {
             when (_modal.visibility) {
                 View.GONE -> {
                     _modal.alpha = 0.0f;
-                    _coverWrapper.translationY = -20.0f;
-                    _controls.translationY = 20.0f;
+                    _coverWrapper.translationY = -30.0f;
+                    _controls.translationY = 30.0f;
                     _modal.visibility = View.VISIBLE;
                     val animator: ValueAnimator = HYTAnimationUtil.getAnimator {
                         val value: Float = it.animatedValue as Float
                         _modal.alpha = value;
-                        _coverWrapper.translationY = (value - 1.0f) * 20.0f;
-                        _controls.translationY = (1.0f - value) * 20.0f;
+                        _coverWrapper.translationY = (value - 1.0f) * 30.0f;
+                        _controls.translationY = (1.0f - value) * 30.0f;
                     };
                     animator.start();
                 };
@@ -181,6 +180,9 @@ class HYTActivity : HYTBaseActivity() {
                 };
                 View.INVISIBLE -> _modal.visibility = View.VISIBLE
             }
+        }
+        _surface.setOnLongClickListener {
+            startActivityIfNeeded(Intent(this, HYTLibrary::class.java), 100);
         }
         _surface.setEGLContextClientVersion(3);
         val vertexShader: String = HYTUtil.readSource(resources.getString(R.string.vertex_shader), assets);
@@ -235,9 +237,6 @@ class HYTActivity : HYTBaseActivity() {
                 HYTAnimationUtil.animateVisibility(_meta);
             }
             view.performClick();
-        }
-        _library.setOnClickListener {
-            startActivityIfNeeded(Intent(this, HYTLibrary::class.java), 100);
         }
     }
 
