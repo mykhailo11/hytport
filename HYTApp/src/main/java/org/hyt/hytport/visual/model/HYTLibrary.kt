@@ -1,7 +1,6 @@
 package org.hyt.hytport.visual.model
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
@@ -81,7 +80,9 @@ class HYTLibrary : HYTBaseActivity() {
             }
 
             override fun onAddNext(audio: HYTAudioModel) {
-                _updateQueue();
+                if (_list.adapter != null){
+                    _updateQueue();
+                }
             }
 
         };
