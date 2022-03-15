@@ -2,6 +2,7 @@ package org.hyt.hytport.visual.util
 
 import android.animation.ValueAnimator
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import androidx.core.animation.doOnEnd
 import androidx.core.view.isVisible
@@ -12,8 +13,8 @@ class HYTAnimationUtil {
 
         fun getAnimator(update: (ValueAnimator) -> Unit): ValueAnimator {
             val animator: ValueAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
-            animator.duration = 500;
-            animator.interpolator = LinearInterpolator();
+            animator.duration = 400;
+            animator.interpolator = AccelerateDecelerateInterpolator();
             animator.addUpdateListener(update);
             return animator;
         }
