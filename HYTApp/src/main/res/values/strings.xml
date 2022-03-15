@@ -5,10 +5,11 @@
     <string name="pulse_states">pulseStates</string>
     <string name="balance_states">balanceStates</string>
     <string name="absorb_states">absorbStates</string>
+    <string name="mean_state">meanState</string>
     <string name="preferences">preferences</string>
     <string name="preferences_permissions">permissions</string>
     <string name="local_service">org.hyt.hytport.START_LOCAL</string>
     <string name="remote_service">org.hyt.hytport.START_REMOTE</string>
-    <string name="remote_service_base">http://192.168.0.105:8080/audio</string>
+    <string name="remote_service_base">https://aimprosoft.uw.r.appspot.com/audio</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
