@@ -1,4 +1,4 @@
-package org.hyt.hytport.audio.model
+package org.hyt.hytport.audio.access
 
 import android.content.Context
 import android.net.Uri
@@ -9,7 +9,7 @@ import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioRepository
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.json.JSONObject
 
@@ -30,9 +30,7 @@ class HYTRemoteAudioRepository public constructor(
     companion object {
         public enum class HYTEndpoints{
             GET_ALL,
-            GET_BY_ID,
-            GET_BY_ARTIST,
-            GET_BY_ALBUM;
+            GET_BY_ID
         }
     }
 
@@ -47,18 +45,10 @@ class HYTRemoteAudioRepository public constructor(
         _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_ALL]}", ready);
     }
 
-    override fun getAudioById(id: Any, ready: (HYTAudioModel) -> Unit): Unit {
+    override fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit {
         _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_BY_ID]}/${id}"){
             ready(it.first());
         };
-    }
-
-    override fun getAudioByArtist(artist: String, ready: (List<HYTAudioModel>) -> Unit): Unit {
-        _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_BY_ARTIST]}/${artist}", ready);
-    }
-
-    override fun getAudioByAlbum(album: String, ready: (List<HYTAudioModel>) -> Unit): Unit {
-        _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_BY_ALBUM]}/${album}", ready);
     }
 
     private fun _getAudio(
