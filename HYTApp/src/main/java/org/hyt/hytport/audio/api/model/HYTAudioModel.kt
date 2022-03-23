@@ -4,32 +4,32 @@ import android.net.Uri
 
 interface HYTAudioModel {
 
-    fun getId(): Long;
+    fun getId(): Long?;
 
-    fun getTitle(): String;
+    fun getTitle(): String?;
 
-    fun getArtist(): String;
+    fun getArtist(): String?;
 
-    fun getAlbum(): String;
+    fun getAlbum(): String?;
 
     fun getAlbumPath(): Uri?;
 
-    fun getDuration(): Long;
+    fun getDuration(): Long?;
 
-    fun setId(id: Long): Unit;
+    fun setId(id: Long?): Unit;
 
-    fun setTitle(title: String): Unit;
+    fun setTitle(title: String?): Unit;
 
-    fun setArtist(artist: String): Unit;
+    fun setArtist(artist: String?): Unit;
 
-    fun setAlbum(album: String): Unit;
+    fun setAlbum(album: String?): Unit;
 
-    fun setAlbumPath(album: Uri): Unit;
+    fun setAlbumPath(album: Uri?): Unit;
 
-    fun setDuration(duration: Long): Unit;
+    fun setDuration(duration: Long?): Unit;
 
-    fun getPath(): Uri;
+    fun getPath(): Uri?;
 
-    fun setPath(path: Uri): Unit;
+    fun setPath(path: Uri?): Unit;
 
 }
