@@ -1,4 +1,4 @@
-package org.hyt.hytport.visual.model
+package org.hyt.hytport.visual.service
 
 import android.opengl.GLSurfaceView
 import android.os.Bundle
@@ -17,10 +17,10 @@ import android.widget.*
 import androidx.core.animation.doOnEnd
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioPlayer
-import org.hyt.hytport.graphics.model.HYTCanvas
+import org.hyt.hytport.audio.api.service.HYTAudioPlayer
+import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.graphics.service.HYTCanvas
 import org.hyt.hytport.visual.util.HYTAnimationUtil
-import java.util.prefs.Preferences
 
 class HYTActivity : HYTBaseActivity() {
 
@@ -53,8 +53,6 @@ class HYTActivity : HYTBaseActivity() {
     private lateinit var _meta: ConstraintLayout;
 
     private lateinit var _consumer: (ByteArray) -> Unit;
-
-    private lateinit var _library: ImageButton;
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,19 +93,25 @@ class HYTActivity : HYTBaseActivity() {
         _cover.clipToOutline = true;
     }
 
-    override fun _getAudit(): HYTAudioPlayer.HYTAudioPlayerAudit {
-        return object : HYTAudioPlayer.HYTAudioPlayerAudit {
+    override fun _getAuditor(): HYTBinder.Companion.HYTAuditor {
+        return object : HYTBinder.Companion.HYTAuditor {
 
-            override fun getId(): Int {
-                return _audit;
+            private var _id: Long = -1L;
+
+            override fun getId(): Long{
+                return _id;
             }
 
-            override fun setId(id: Int) {
-                _audit = id;
+            override fun setId(id: Long) {
+                _id = id;
             }
 
             override fun onReady() {
-                super.onReady();
+                _player.queue {
+                    if (!it.isEmpty()){
+                        _setMeta(it.last);
+                    }
+                }
             }
 
             override fun onPlay(audio: HYTAudioModel) {
@@ -132,8 +136,8 @@ class HYTActivity : HYTBaseActivity() {
                 _consumer.invoke(food);
             }
 
-            override fun onDestroy(audio: HYTAudioModel) {
-                _player.removeAudit(_audit);
+            override fun onDestroy() {
+                _player.removeAuditor(_auditor!!);
                 _play.setImageResource(R.drawable.hyt_pause_200dp);
             }
 
