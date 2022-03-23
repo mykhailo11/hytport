@@ -60,7 +60,12 @@ class HYTAudioModelAdapter(
     }
 
     override fun getItemId(index: Int): Long {
-        return _queue.elementAt(index).getId();
+        val id: Long? = _queue.elementAt(index).getId();
+        if (id != null){
+            return id;
+        }else {
+            return -1L;
+        }
     }
 
     override fun getView(index: Int, view: View?, parent: ViewGroup?): View {

@@ -1,4 +1,4 @@
-package org.hyt.hytport.visual.model
+package org.hyt.hytport.visual.service
 
 import android.content.Context
 import android.os.Bundle
@@ -10,10 +10,11 @@ import android.widget.ImageButton
 import android.widget.ListView
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioPlayer
 import org.hyt.hytport.audio.factory.HYTAudioFactory
-import org.hyt.hytport.audio.model.HYTBaseAudioRepository
-import org.hyt.hytport.audio.model.HYTRemoteAudioRepository
+import org.hyt.hytport.audio.access.HYTBaseAudioRepository
+import org.hyt.hytport.audio.access.HYTRemoteAudioRepository
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
+import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.visual.factory.HYTViewFactory
 
 class HYTLibrary : HYTBaseActivity() {
@@ -37,19 +38,22 @@ class HYTLibrary : HYTBaseActivity() {
 
     private fun _initControls(): Unit {
         _switch.setOnClickListener {
-            when (_player.getRepository()) {
-                HYTBaseAudioRepository::class.java.canonicalName -> _player.setRepository(
-                    HYTAudioFactory.getRemoteAudioRepository(
-                        resources.getString(R.string.remote_service_base),
-                        mapOf(
-                            Pair(HYTRemoteAudioRepository.Companion.HYTEndpoints.GET_ALL, "all")
-                        ),
-                        this
-                    )
-                );
-                HYTRemoteAudioRepository::class.java.canonicalName -> _player.setRepository(
-                    HYTAudioFactory.getAudioRepository(contentResolver)
-                );
+            val repository: Class<HYTAudioRepository>? = _player.getRepository();
+            if (repository != null){
+                when (repository.canonicalName) {
+                    HYTBaseAudioRepository::class.java.canonicalName -> _player.setRepository(
+                        HYTAudioFactory.getRemoteAudioRepository(
+                            resources.getString(R.string.remote_service_base),
+                            mapOf(
+                                Pair(HYTRemoteAudioRepository.Companion.HYTEndpoints.GET_ALL, "all")
+                            ),
+                            this
+                        )
+                    );
+                    HYTRemoteAudioRepository::class.java.canonicalName -> _player.setRepository(
+                        HYTAudioFactory.getAudioRepository(contentResolver)
+                    );
+                }
             }
         };
         _backPlayer.setOnTouchListener { view: View, motion: MotionEvent ->
@@ -60,23 +64,27 @@ class HYTLibrary : HYTBaseActivity() {
         }
     }
 
-    override fun _getAudit(): HYTAudioPlayer.HYTAudioPlayerAudit {
+    override fun _getAuditor(): HYTBinder.Companion.HYTAuditor {
         val context: Context = this;
-        return object : HYTAudioPlayer.HYTAudioPlayerAudit {
+        return object : HYTBinder.Companion.HYTAuditor {
 
-            override fun getId(): Int {
-                return _audit;
+            private var _id: Long = -1L;
+
+            override fun getId(): Long {
+                return _id;
             }
 
-            override fun setId(id: Int) {
-                _audit = id;
+            override fun setId(id: Long) {
+                _id = id;
             }
 
             override fun onReady() {
-                _list.adapter = HYTViewFactory.getAudioAdapter(context, _player.queue()) {
-                    _player.play(it);
-                };
-                _updateQueue();
+                _player.queue {
+                    _list.adapter = HYTViewFactory.getAudioAdapter(context, it) { audio: HYTAudioModel ->
+                        _player.play(audio);
+                    };
+                    _updateQueue();
+                }
             }
 
             override fun onAddNext(audio: HYTAudioModel) {
@@ -85,16 +93,21 @@ class HYTLibrary : HYTBaseActivity() {
                 }
             }
 
+            override fun onRepositoryChanged(repository: HYTAudioRepository) {
+                _updateQueue();
+            }
+
         };
     }
 
     private fun _updateQueue(): Unit {
-        when (_player.getRepository()){
+        val repository: Class<HYTAudioRepository>? = _player.getRepository();
+        when (repository!!.canonicalName){
             HYTBaseAudioRepository::class.java.canonicalName -> _switch.setTextColor(
                 this.getColor(R.color.hyt_text_dark)
             );
             HYTRemoteAudioRepository::class.java.canonicalName -> _switch.setTextColor(
-              this.getColor(R.color.hyt_grey)
+                this.getColor(R.color.hyt_grey)
             );
         }
         (_list.adapter as BaseAdapter).notifyDataSetChanged();

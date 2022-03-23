@@ -1,4 +1,4 @@
-package org.hyt.hytport.graphics.model
+package org.hyt.hytport.graphics.service
 
 import android.content.Context
 import android.opengl.GLES30

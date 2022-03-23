@@ -1,4 +1,4 @@
-package org.hyt.hytport.audio.model
+package org.hyt.hytport.audio.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -15,57 +15,55 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioPlayer
-import org.hyt.hytport.audio.api.model.HYTAudioRepository
+import org.hyt.hytport.audio.api.service.HYTAudioPlayer
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
 import org.hyt.hytport.util.HYTUtil
 import java.util.*
+import kotlin.collections.ArrayList
 
 class HYTService : Service() {
-
-    companion object {
-
-        public val PREVIOUS: String = "org.hyt.hytport.PREVIOUS";
-
-        public val PLAY: String = "org.hyt.hytport.PLAY";
-
-        public val NEXT: String = "org.hyt.hytport.NEXT";
-
-        public val DESTROY: String = "org.hyt.hytport.DESTROY";
-
-    }
-
-    private lateinit var _player: HYTAudioPlayer;
-
-    private var _audioRepository: HYTAudioRepository? = null;
 
     private lateinit var _binder: HYTBinder;
 
     private lateinit var _mediaSession: MediaSession;
 
+    private var _playIntent: String? = null;
+
+    private var _nextIntent: String? = null;
+
+    private var _previousIntent: String? = null;
+
+    private var _destroyIntent: String? = null;
+
     override fun onCreate() {
         super.onCreate();
-        _binder = HYTBaseBinder();
-        _player = HYTAudioPlayerFactory.getAudioPlayer(this);
+        _playIntent = resources.getString(R.string.hyt_service_play);
+        _nextIntent = resources.getString(R.string.hyt_service_next);
+        _previousIntent = resources.getString(R.string.hyt_service_previous);
+        _destroyIntent = resources.getString(R.string.hyt_service_destroy);
+        _binder = HYTAudioFactory.getBinder(HYTAudioPlayerFactory.getAudioPlayer(this) {
+            _binder.next();
+        });
         _mediaSession = MediaSession(this, "hyt_session");
         _mediaSession.setCallback(object : MediaSession.Callback() {
 
             override fun onPlay() {
-                _player.play();
+                _binder.play()
             }
 
             override fun onPause() {
-                _player.pause();
+                _binder.pause();
             }
 
             override fun onSkipToNext() {
-                _player.next();
+                _binder.next();
             }
 
             override fun onSkipToPrevious() {
-                _player.previous();
+                _binder.previous();
             }
 
         });
@@ -108,25 +106,25 @@ class HYTService : Service() {
         playerView.setOnClickPendingIntent(
             R.id.hyt_player_previous,
             HYTUtil.wrapIntentForService(
-                this, Intent(PREVIOUS)
+                this, Intent(_previousIntent)
             )
         );
         playerView.setOnClickPendingIntent(
             R.id.hyt_player_play,
             HYTUtil.wrapIntentForService(
-                this, Intent(PLAY)
+                this, Intent(_playIntent)
             )
         );
         playerView.setOnClickPendingIntent(
             R.id.hyt_player_next,
             HYTUtil.wrapIntentForService(
-                this, Intent(NEXT)
+                this, Intent(_nextIntent)
             )
         );
         playerView.setOnClickPendingIntent(
             R.id.hyt_player_close,
             HYTUtil.wrapIntentForService(
-                this, Intent(DESTROY)
+                this, Intent(_destroyIntent)
             )
         );
     }
@@ -134,93 +132,25 @@ class HYTService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent != null && intent.action != null) {
             when (intent.action!!) {
-                PREVIOUS -> _player.previous();
-                PLAY -> {
-                    if (_player.isPlaying()) {
-                        _player.pause();
+                _previousIntent -> _binder.previous();
+                _playIntent -> {
+                    if (_binder.isPlaying()) {
+                        _binder.pause();
                     } else {
-                        _player.play();
+                        _binder.play();
                     }
                 }
-                NEXT -> _player.next();
-                DESTROY -> stopSelf();
+                _nextIntent -> _binder.next();
+                _destroyIntent -> stopSelf();
             }
         }
         return super.onStartCommand(intent, flags, startId);
     }
 
     override fun onDestroy() {
-        _player.destroy();
+        _binder.destroy();
         _mediaSession.release();
         super.onDestroy();
-    }
-
-    private inner class HYTBaseBinder : Binder(), HYTBinder {
-
-        override fun play(): HYTAudioModel {
-            return _player.play();
-        }
-
-        override fun play(audio: HYTAudioModel): HYTAudioModel {
-            return _player.play(audio);
-        }
-
-        override fun isPlaying(): Boolean {
-            return _player.isPlaying();
-        }
-
-        override fun pause(): HYTAudioModel {
-            return _player.pause();
-        }
-
-        override fun next(): HYTAudioModel {
-            return _player.next();
-        }
-
-        override fun previous(): HYTAudioModel {
-            return _player.previous();
-        }
-
-        override fun addNext(next: HYTAudioModel) {
-            _player.addNext(next);
-        }
-
-        override fun queue(): Deque<HYTAudioModel> {
-            return _player.queue();
-        }
-
-        override fun destroy() {
-            _player.destroy();
-        }
-
-        override fun addAudit(audit: HYTAudioPlayer.HYTAudioPlayerAudit): Int {
-            return _player.addAudit(audit);
-        }
-
-        override fun removeAudit(audit: Int) {
-            _player.removeAudit(audit);
-        }
-
-        override fun setRepository(repository: HYTAudioRepository) {
-            if (_audioRepository == null || _audioRepository!!.javaClass.canonicalName != repository.javaClass.canonicalName) {
-                _audioRepository = repository;
-                _audioRepository!!.getAllAudio { audios ->
-                    _player.queue().clear();
-                    audios.forEach { audio ->
-                        _player.addNext(audio);
-                    };
-                    _player.next();
-                };
-            }
-        }
-
-        override fun getRepository(): String? {
-            if (_audioRepository == null) {
-                return null;
-            }
-            return _audioRepository!!.javaClass.canonicalName;
-        }
-
     }
 
     override fun onBind(intent: Intent?): IBinder {

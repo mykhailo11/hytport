@@ -1,4 +1,4 @@
-package org.hyt.hytport.audio.model
+package org.hyt.hytport.audio.access
 
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -7,7 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioRepository
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 
 class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYTAudioRepository {
@@ -46,31 +46,13 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         ));
     }
 
-    override fun getAudioById(id: Any, ready: (HYTAudioModel) -> Unit): Unit {
+    override fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit {
         val parameters: Array<String> = arrayOf(id.toString());
         ready(_getAudio(
             _QUERY__ID,
             parameters,
             _getStorage()
         ).first());
-    }
-
-    override fun getAudioByArtist(artist: String, ready: (List<HYTAudioModel>) -> Unit): Unit {
-        val parameters: Array<String> = arrayOf(artist);
-        ready(_getAudio(
-            _QUERY_ARTIST,
-            parameters,
-            _getStorage()
-        ));
-    }
-
-    override fun getAudioByAlbum(album: String, ready: (List<HYTAudioModel>) -> Unit): Unit {
-        val parameters: Array<String> = arrayOf(album);
-        ready(_getAudio(
-            _QUERY_ALBUM,
-            parameters,
-            _getStorage()
-        ));
     }
 
     private fun _getStorage(): Uri{
@@ -103,8 +85,9 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             val durationColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             val dataColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
             do {
+                val id: Long = cursor.getLong(idColumn);
                 val audio: HYTAudioModel = HYTAudioFactory.getAudioModel();
-                audio.setId(cursor.getLong(idColumn));
+                audio.setId(id);
                 audio.setTitle(cursor.getString(titleColumn));
                 audio.setArtist(cursor.getString(artistColumn));
                 audio.setAlbum(cursor.getString(albumColumn));
@@ -124,10 +107,11 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
                     );
                 }
                 audio.setDuration(cursor.getLong(durationColumn));
+
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
                     audio.setPath(Uri.parse("file://" + cursor.getString(dataColumn)));
                 }else{
-                    audio.setPath(ContentUris.withAppendedId(storage, audio.getId()));
+                    audio.setPath(ContentUris.withAppendedId(storage, id));
                 }
                 items.add(audio);
             } while (cursor.moveToNext());

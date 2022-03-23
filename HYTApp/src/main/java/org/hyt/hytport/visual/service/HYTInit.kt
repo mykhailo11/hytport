@@ -1,15 +1,12 @@
-package org.hyt.hytport.visual.model
+package org.hyt.hytport.visual.service
 
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.preference.Preference
-import android.preference.PreferenceManager
 import android.view.Window
 import android.widget.Button
 import org.hyt.hytport.R

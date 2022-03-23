@@ -12,4 +12,8 @@
     <string name="remote_service">org.hyt.hytport.START_REMOTE</string>
     <string name="remote_service_base">https://aimprosoft.uw.r.appspot.com/audio</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="hyt_service_previous">org.hyt.hytport.PREVIOUS</string>
+    <string name="hyt_service_play">org.hyt.hytport.PLAY</string>
+    <string name="hyt_service_next">org.hyt.hytport.NEXT</string>
+    <string name="hyt_service_destroy">org.hyt.hytport.DESTROY</string>
 </resources>

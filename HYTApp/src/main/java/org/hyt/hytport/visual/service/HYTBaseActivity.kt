@@ -1,4 +1,4 @@
-package org.hyt.hytport.visual.model
+package org.hyt.hytport.visual.service
 
 import android.content.*
 import android.media.AudioManager
@@ -7,14 +7,14 @@ import android.os.IBinder
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
 import org.hyt.hytport.R
-import org.hyt.hytport.audio.api.model.HYTAudioPlayer
+import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
-import org.hyt.hytport.audio.model.HYTService
+import org.hyt.hytport.audio.service.HYTService
 
 abstract class HYTBaseActivity: AppCompatActivity() {
 
-    protected var _audit: Int = -1;
+    protected var _auditor: HYTBinder.Companion.HYTAuditor? = null;
 
     protected lateinit var _player: HYTBinder;
 
@@ -42,7 +42,8 @@ abstract class HYTBaseActivity: AppCompatActivity() {
 
             override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                 _player = binder as HYTBinder;
-                _audit = _player.addAudit(_getAudit());
+                _auditor = _getAuditor();
+                _player.addAuditor(_auditor!!);
                 if (_player.getRepository() == null) {
                     _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));
                 }
@@ -64,11 +65,11 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         }
     }
 
-    protected abstract fun _getAudit(): HYTAudioPlayer.HYTAudioPlayerAudit;
+    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor;
 
     override fun onDestroy() {
-        if (_audit != -1 && _bound){
-            _player.removeAudit(_audit);
+        if (_auditor != null && _bound){
+            _player.removeAuditor(_auditor!!);
         }
         super.onDestroy();
     }
