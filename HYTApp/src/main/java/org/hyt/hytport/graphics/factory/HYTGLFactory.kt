@@ -1,10 +1,14 @@
 package org.hyt.hytport.graphics.factory
 
+import android.content.Context
+import android.opengl.GLSurfaceView
 import org.hyt.hytport.graphics.api.model.*
 import org.hyt.hytport.graphics.model.HYTGLBaseAttribute
 import org.hyt.hytport.graphics.model.HYTGLBaseBuffer
 import org.hyt.hytport.graphics.model.HYTGLBaseData
 import org.hyt.hytport.graphics.model.HYTGLBaseProgram
+import org.hyt.hytport.graphics.service.HYTCanvas
+import org.hyt.hytport.visual.api.model.HYTState
 import javax.microedition.khronos.opengles.GL10
 
 class HYTGLFactory {
@@ -29,6 +33,15 @@ class HYTGLFactory {
             fragmentShader: String
         ): HYTGLProgram{
             return HYTGLBaseProgram(gl, vertexShader, fragmentShader);
+        }
+
+        fun getCanvas(
+            context: Context,
+            vertexShader: String,
+            fragmentShader: String,
+            states: Map<String, Array<HYTState>>
+        ): GLSurfaceView.Renderer{
+            return HYTCanvas(context, vertexShader, fragmentShader, states);
         }
 
     }
