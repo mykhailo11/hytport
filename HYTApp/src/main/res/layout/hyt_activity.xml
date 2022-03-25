@@ -11,13 +11,13 @@
     <androidx.constraintlayout.widget.ConstraintLayout android:layout_width="match_parent"
                                                        android:layout_height="match_parent" android:id="@+id/hyt_main"
                                                        android:clipToPadding="false" android:clipChildren="false">
-        <android.opengl.GLSurfaceView
+        <androidx.fragment.app.FragmentContainerView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/HYTVisualizer"
-                app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                android:name="org.hyt.hytport.visual.fragment.visualizer.HYTVisualizer"
+                android:id="@+id/fragmentContainerView" app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
         <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" android:id="@+id/hyt_modal"

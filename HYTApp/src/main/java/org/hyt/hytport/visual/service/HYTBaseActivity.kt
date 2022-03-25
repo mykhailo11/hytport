@@ -7,7 +7,6 @@ import android.os.IBinder
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
 import org.hyt.hytport.R
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.service.HYTService
@@ -38,11 +37,11 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         window.navigationBarColor = getColor(R.color.hyt_transparent);
         supportActionBar?.hide();
         volumeControlStream = AudioManager.STREAM_MUSIC;
+        _auditor = _getAuditor();
         _connection = object : ServiceConnection {
 
             override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                 _player = binder as HYTBinder;
-                _auditor = _getAuditor();
                 _player.addAuditor(_auditor!!);
                 if (_player.getRepository() == null) {
                     _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));

@@ -14,12 +14,14 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.view.MotionEvent
 import android.widget.*
+import androidx.activity.viewModels
 import androidx.core.animation.doOnEnd
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.graphics.service.HYTCanvas
+import org.hyt.hytport.visual.fragment.visualizer.HYTVisualizerModel
 import org.hyt.hytport.visual.util.HYTAnimationUtil
 
 class HYTActivity : HYTBaseActivity() {
@@ -30,7 +32,7 @@ class HYTActivity : HYTBaseActivity() {
 
     }
 
-    private lateinit var _surface: GLSurfaceView;
+    private val _visualizerModel: HYTVisualizerModel by viewModels();
 
     private lateinit var _title: TextView;
 
@@ -72,7 +74,6 @@ class HYTActivity : HYTBaseActivity() {
         }
         super.onCreate(savedInstanceState);
         setContentView(R.layout.hyt_activity);
-        _surface = findViewById(R.id.HYTVisualizer);
         _title = findViewById(R.id.hyt_meta_title);
         _artist = findViewById(R.id.hyt_meta_artist);
         _modal = findViewById(R.id.hyt_modal);
@@ -156,7 +157,7 @@ class HYTActivity : HYTBaseActivity() {
     }
 
     private fun _initSurface(states: Map<String, Array<HYTState>>): Unit {
-        _surface.setOnClickListener {
+        _visualizerModel.setSurfaceClick {
             when (_modal.visibility) {
                 View.GONE -> {
                     _modal.alpha = 0.0f;
@@ -185,20 +186,12 @@ class HYTActivity : HYTBaseActivity() {
                 View.INVISIBLE -> _modal.visibility = View.VISIBLE
             }
         }
-        _surface.setOnLongClickListener {
+        _visualizerModel.setSurfaceLongClick {
             startActivityIfNeeded(Intent(this, HYTLibrary::class.java), 100);
         }
-        _surface.setEGLContextClientVersion(3);
-        val vertexShader: String = HYTUtil.readSource(resources.getString(R.string.vertex_shader), assets);
-        val fragmentShader: String = HYTUtil.readSource(resources.getString(R.string.fragment_shader), assets);
-        _surface.setRenderer(
-            HYTCanvas(
-                this,
-                vertexShader,
-                fragmentShader,
-                states
-            )
-        );
+        _visualizerModel.vertexShader = HYTUtil.readSource(resources.getString(R.string.vertex_shader), assets);
+        _visualizerModel.fragmentShader = HYTUtil.readSource(resources.getString(R.string.fragment_shader), assets);
+        _visualizerModel.states = states;
     }
 
     private fun _initControls(): Unit {
