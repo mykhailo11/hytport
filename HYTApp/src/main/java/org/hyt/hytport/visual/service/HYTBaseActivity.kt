@@ -37,12 +37,15 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         window.navigationBarColor = getColor(R.color.hyt_transparent);
         supportActionBar?.hide();
         volumeControlStream = AudioManager.STREAM_MUSIC;
-        _auditor = _getAuditor();
         _connection = object : ServiceConnection {
 
             override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                 _player = binder as HYTBinder;
-                _player.addAuditor(_auditor!!);
+                _auditor = _getAuditor();
+                if (_auditor != null){
+                    _player.addAuditor(_auditor!!);
+                }
+                _preparePlayer();
                 if (_player.getRepository() == null) {
                     _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));
                 }
@@ -64,12 +67,15 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         }
     }
 
-    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor;
+    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor?;
+
+    protected open fun _preparePlayer(): Unit {}
 
     override fun onDestroy() {
         if (_auditor != null && _bound){
             _player.removeAuditor(_auditor!!);
         }
+        unbindService(_connection);
         super.onDestroy();
     }
 
