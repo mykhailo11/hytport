@@ -26,7 +26,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:rippleColor="@color/hyt_accent" android:textColor="#9781B8"
+            app:rippleColor="@color/hyt_accent" android:textColor="@color/hyt_text_dark"
             android:background="@drawable/hyt_meta_title_border_200dp" android:paddingLeft="30dp"
             android:paddingRight="30dp" android:paddingTop="2dp" android:paddingBottom="2dp"
             app:layout_constrainedWidth="true" app:layout_constraintWidth_default="percent"

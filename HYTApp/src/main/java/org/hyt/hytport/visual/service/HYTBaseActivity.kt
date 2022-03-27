@@ -7,7 +7,6 @@ import android.os.IBinder
 import android.view.Window
 import androidx.appcompat.app.AppCompatActivity
 import org.hyt.hytport.R
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.service.HYTService
@@ -43,7 +42,10 @@ abstract class HYTBaseActivity: AppCompatActivity() {
             override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                 _player = binder as HYTBinder;
                 _auditor = _getAuditor();
-                _player.addAuditor(_auditor!!);
+                if (_auditor != null){
+                    _player.addAuditor(_auditor!!);
+                }
+                _preparePlayer();
                 if (_player.getRepository() == null) {
                     _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));
                 }
@@ -65,12 +67,15 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         }
     }
 
-    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor;
+    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor?;
+
+    protected open fun _preparePlayer(): Unit {}
 
     override fun onDestroy() {
         if (_auditor != null && _bound){
             _player.removeAuditor(_auditor!!);
         }
+        unbindService(_connection);
         super.onDestroy();
     }
 

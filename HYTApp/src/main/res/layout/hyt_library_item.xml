@@ -25,7 +25,7 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent" android:id="@+id/hyt_item_title"
-                    android:maxLines="1" android:textColor="@color/hyt_grey"/>
+                    android:maxLines="1" android:textColor="@color/hyt_grey" android:textSize="16sp"/>
         </HorizontalScrollView>
         <HorizontalScrollView
                 android:layout_width="wrap_content"
@@ -35,7 +35,7 @@
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent" android:id="@+id/hyt_item_artist"
-                    android:maxLines="1" android:textColor="#77668F"/>
+                    android:maxLines="1" android:textColor="@color/hyt_text_dark"/>
         </HorizontalScrollView>
     </LinearLayout>
 </LinearLayout>
