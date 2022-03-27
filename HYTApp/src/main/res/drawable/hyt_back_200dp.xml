@@ -1,8 +1,8 @@
 <vector android:height="200dp" android:scaleType="fitXY"
         android:viewportHeight="200" android:viewportWidth="200"
         android:width="200dp" xmlns:android="http://schemas.android.com/apk/res/android">
-    <path android:fillColor="@color/hyt_accent" android:fillAlpha="0.2"
+    <path android:fillColor="@color/hyt_accent" android:fillAlpha="0.3"
           android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0z"/>
-    <clip-path android:pathData="M0.0 120.0 A120.0 20.0 0 0 1 200.0 120.0 L200.0 200.0 L0.0 200.0z"/>
-    <path android:fillColor="@color/hyt_dark" android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0z"/>
+    <!--clip-path android:pathData="M0.0 120.0 A120.0 20.0 0 0 1 200.0 120.0 L200.0 200.0 L0.0 200.0z"/>
+    <path android:fillColor="@color/hyt_dark" android:pathData="M0.0 0.0 L200.0 0.0 L200.0 200.0 L0.0 200.0z"/-->
 </vector>

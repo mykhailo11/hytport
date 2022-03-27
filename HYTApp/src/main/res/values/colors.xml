@@ -6,9 +6,9 @@
     <color name="hyt_secondary_variant">#1E002E</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="hyt_accent">#503875</color>
-    <color name="hyt_text_dark">#786891</color>
-    <color name="hyt_grey">#A6A56E</color>
+    <color name="hyt_accent">#370691</color>
+    <color name="hyt_text_dark">#C7FFFE</color>
+    <color name="hyt_grey">#A68D6E</color>
     <color name="hyt_dark">#0B0B13</color>
     <color name="hyt_press">#2BFFA4</color>
     <color name="hyt_player">#8E8E8E</color>
