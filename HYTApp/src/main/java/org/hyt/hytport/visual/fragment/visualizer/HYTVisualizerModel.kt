@@ -1,35 +1,46 @@
 package org.hyt.hytport.visual.fragment.visualizer
 
 import android.view.View
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import org.hyt.hytport.visual.api.model.HYTState
 
-class HYTVisualizerModel: ViewModel() {
+class HYTVisualizerModel : ViewModel() {
 
-    private var _onSurfaceClick: (View) -> Unit = {};
+    companion object {
 
-    private var _onSurfaceLongCLick: (View) -> Boolean = {true};
+        public class HYTRendererParameters public constructor(
+            vertexShader: String,
+            fragmentShader: String,
+            states: Map<String, Array<HYTState>>
+        ){
 
-    public var vertexShader: String? = null;
+            val vertexShader: String;
 
-    public var fragmentShader: String? = null;
+            val fragmentShader: String;
 
-    public var states: Map<String, Array<HYTState>>? = null;
+            public val states: Map<String, Array<HYTState>>;
 
-    public fun setSurfaceClick(trigger: (View) -> Unit) {
-        _onSurfaceClick = trigger;
+            init {
+                this.vertexShader = vertexShader;
+                this.fragmentShader = fragmentShader;
+                this.states = states;
+            }
+
+        }
+
     }
 
-    public fun setSurfaceLongClick(trigger: (View) -> Boolean) {
-        _onSurfaceLongCLick = trigger;
+    public val data: MutableLiveData<HYTRendererParameters> by lazy {
+        MutableLiveData();
     }
 
-    public fun surfaceClick(view: View): Unit {
-        _onSurfaceClick(view);
+    public val click: MutableLiveData<() -> Unit> by lazy {
+        MutableLiveData();
     }
 
-    public fun surfaceLongClick(view: View): Boolean {
-        return _onSurfaceLongCLick(view);
+    public val longClick: MutableLiveData<() -> Boolean> by lazy {
+        MutableLiveData();
     }
 
 }
