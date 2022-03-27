@@ -23,6 +23,13 @@ class HYTWrapperBinder public constructor(
         _player.consumer { food: ByteArray ->
             _defaultConsumer(food)
         }
+        _player.progress { duration: Int ->
+            { time ->
+                _auditors.forEach { auditor: HYTBinder.Companion.HYTAuditor ->
+                    auditor.progress(duration)(time);
+                }
+            }
+        }
         _repository = null;
     }
 
@@ -133,6 +140,14 @@ class HYTWrapperBinder public constructor(
 
     override fun removeAuditor(auditor: HYTBinder.Companion.HYTAuditor): Unit {
         _auditors.remove(auditor);
+    }
+
+    override fun progress(consumer: (Int) -> (Int) -> Unit) {
+        _player.progress(consumer);
+    }
+
+    override fun seek(to: Int) {
+        _player.seek(to);
     }
 
 }

@@ -23,6 +23,10 @@ interface HYTAudioPlayer {
 
     fun consumer(consumer: (ByteArray) -> Unit): Unit;
 
+    fun progress(consumer: (Int) -> (Int) -> Unit): Unit;
+
+    fun seek(to: Int): Unit;
+
     fun destroy();
 
 }
