@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,6 +27,8 @@ class HYTPlayer : Fragment(R.layout.hyt_player_fragment) {
 
     private var _play: ImageButton? = null;
 
+    private var _seeker: SeekBar? = null;
+
     private var _auditor: HYTBinder.Companion.HYTAuditor? = null;
 
     private var _player: HYTBinder? = null;
@@ -38,8 +41,22 @@ class HYTPlayer : Fragment(R.layout.hyt_player_fragment) {
         _next = view.findViewById(R.id.hyt_next);
         _previous = view.findViewById(R.id.hyt_previous);
         _play = view.findViewById(R.id.hyt_play);
+        _seeker = view.findViewById(R.id.hyt_seeker);
+        _seeker!!.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(seeker: SeekBar?, progress: Int, fromUser: Boolean) {}
+
+                override fun onStartTrackingTouch(seeker: SeekBar?) {}
+
+                override fun onStopTrackingTouch(seeker: SeekBar?) {
+                    _player!!.seek(_seeker!!.progress * 1000);
+                }
+
+            }
+        )
         _model.player.observe(this) { player: HYTBinder ->
-            if (_auditor == null){
+            if (_auditor == null) {
                 _player = player;
                 _bound = true;
                 _auditor = object : HYTBinder.Companion.HYTAuditor {
@@ -60,9 +77,9 @@ class HYTPlayer : Fragment(R.layout.hyt_player_fragment) {
                                 _setMeta(queue.last);
                             }
                         }
-                        if (player.isPlaying()){
+                        if (player.isPlaying()) {
                             _play!!.setImageResource(R.drawable.hyt_play_200dp);
-                        }else {
+                        } else {
                             _play!!.setImageResource(R.drawable.hyt_pause_200dp);
                         }
                     }
@@ -91,6 +108,14 @@ class HYTPlayer : Fragment(R.layout.hyt_player_fragment) {
                         _play!!.setImageResource(R.drawable.hyt_pause_200dp);
                     }
 
+                    override fun progress(duration: Int): (Int) -> Unit {
+                        _seeker!!.max = duration / 1000;
+                        return { time: Int ->
+                            if (!_seeker!!.isPressed) {
+                                _seeker!!.progress = time / 1000;
+                            }
+                        }
+                    }
                 }
                 _player!!.addAuditor(_auditor!!);
             }
