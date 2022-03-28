@@ -3,7 +3,6 @@ package org.hyt.hytport.audio.api.service
 import android.os.IBinder
 import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 
 interface HYTBinder: HYTAudioPlayer, IBinder {
 
@@ -28,6 +27,10 @@ interface HYTBinder: HYTAudioPlayer, IBinder {
             fun onPrevious(audio: HYTAudioModel): Unit{}
 
             fun consumer(food: ByteArray): Unit{}
+
+            fun progress(time: Int): (Int) -> Unit{
+                return {}
+            }
 
             fun onRepositoryChanged(repository: HYTAudioRepository): Unit{}
 

@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.audiofx.Visualizer
+import android.os.Handler
+import android.os.Looper
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import java.util.*
@@ -21,6 +23,10 @@ class HYTBaseAudioPlayer public constructor(
     private val _context: Context;
 
     private var _consumer: (ByteArray) -> Unit = {};
+
+    private var _progress: (Int) -> (Int) -> Unit = {{}};
+
+    private var _progressTime: (Int) -> Unit = {};
 
     private val _visualizer: Visualizer;
 
@@ -44,6 +50,7 @@ class HYTBaseAudioPlayer public constructor(
             completion();
         }
         _player.setOnPreparedListener {
+            _progressTime = _progress(_player.duration);
             if (!_player.isPlaying) {
                 _player.start();
             }
@@ -57,6 +64,16 @@ class HYTBaseAudioPlayer public constructor(
             false
         );
         _visualizer.scalingMode = Visualizer.SCALING_MODE_AS_PLAYED;
+        val handler: Handler = Handler(Looper.getMainLooper());
+        handler.postDelayed(
+            object: Runnable{
+                override fun run() {
+                    _progressTime(_player.currentPosition);
+                    handler.postDelayed(this, 1000);
+                }
+            },
+          1000
+        );
     }
 
 
@@ -143,6 +160,14 @@ class HYTBaseAudioPlayer public constructor(
 
     override fun consumer(consumer: (ByteArray) -> Unit) {
         _consumer = consumer;
+    }
+
+    override fun progress(consumer: (Int) -> (Int) -> Unit) {
+        _progress = consumer;
+    }
+
+    override fun seek(to: Int) {
+        _player.seekTo(to);
     }
 
 }

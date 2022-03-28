@@ -48,7 +48,13 @@ class HYTUtil {
             return pending;
         }
 
-
+        fun anyMatch(base: String): String {
+            return base.lowercase().map {
+                ".*[$it${it.uppercase()}]"
+            }.reduce { result: String, current: String ->
+                result + current
+            } + ".*";
+        }
 
     }
 

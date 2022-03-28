@@ -17,7 +17,7 @@ abstract class HYTBaseActivity: AppCompatActivity() {
 
     protected lateinit var _player: HYTBinder;
 
-    private lateinit var _connection: ServiceConnection;
+    private var _connection: ServiceConnection? = null;
 
     protected var _bound: Boolean = false;
 
@@ -61,9 +61,9 @@ abstract class HYTBaseActivity: AppCompatActivity() {
     }
 
     protected fun _startPlayer(): Unit{
-        if (!_bound){
+        if (!_bound && _connection != null){
             startService(Intent(this, HYTService::class.java));
-            bindService(Intent(this, HYTService::class.java), _connection, 0);
+            bindService(Intent(this, HYTService::class.java), _connection!!, 0);
         }
     }
 
@@ -75,7 +75,9 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         if (_auditor != null && _bound){
             _player.removeAuditor(_auditor!!);
         }
-        unbindService(_connection);
+        if (_connection != null){
+            unbindService(_connection!!);
+        }
         super.onDestroy();
     }
 
