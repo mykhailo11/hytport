@@ -3,10 +3,13 @@ package org.hyt.hytport.audio.factory
 import android.content.ContentResolver
 import android.content.Context
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.model.HYTAudioRepository
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.model.HYTBaseAudioModel
-import org.hyt.hytport.audio.model.HYTBaseAudioRepository
-import org.hyt.hytport.audio.model.HYTRemoteAudioRepository
+import org.hyt.hytport.audio.access.HYTBaseAudioRepository
+import org.hyt.hytport.audio.access.HYTRemoteAudioRepository
+import org.hyt.hytport.audio.api.service.HYTAudioPlayer
+import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.audio.service.HYTWrapperBinder
 
 class HYTAudioFactory {
 
@@ -16,7 +19,7 @@ class HYTAudioFactory {
             return HYTBaseAudioModel();
         }
 
-        fun getAudioRepository(resolver: ContentResolver): HYTAudioRepository{
+        fun getAudioRepository(resolver: ContentResolver): HYTAudioRepository {
             return HYTBaseAudioRepository(resolver);
         }
 
@@ -24,8 +27,14 @@ class HYTAudioFactory {
             base: String,
             endpoints: Map<HYTRemoteAudioRepository.Companion.HYTEndpoints, String>,
             context: Context
-        ): HYTAudioRepository{
+        ): HYTAudioRepository {
             return HYTRemoteAudioRepository(base, endpoints, context);
+        }
+
+        fun getBinder(
+            player: HYTAudioPlayer
+        ): HYTBinder {
+            return HYTWrapperBinder(player);
         }
 
     }
