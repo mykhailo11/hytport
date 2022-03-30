@@ -7,9 +7,9 @@ import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.model.HYTBaseAudioModel
 import org.hyt.hytport.audio.access.HYTBaseAudioRepository
 import org.hyt.hytport.audio.access.HYTRemoteAudioRepository
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.service.HYTWrapperBinder
+
 
 class HYTAudioFactory {
 
@@ -31,10 +31,8 @@ class HYTAudioFactory {
             return HYTRemoteAudioRepository(base, endpoints, context);
         }
 
-        fun getBinder(
-            player: HYTAudioPlayer
-        ): HYTBinder {
-            return HYTWrapperBinder(player);
+        fun getBinder(): HYTBinder {
+            return HYTWrapperBinder();
         }
 
     }

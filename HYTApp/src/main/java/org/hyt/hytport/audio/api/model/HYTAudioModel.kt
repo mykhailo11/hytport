@@ -4,7 +4,7 @@ import android.net.Uri
 
 interface HYTAudioModel {
 
-    fun getId(): Long?;
+    fun getId(): Long;
 
     fun getTitle(): String?;
 
@@ -16,7 +16,7 @@ interface HYTAudioModel {
 
     fun getDuration(): Long?;
 
-    fun setId(id: Long?): Unit;
+    fun setId(id: Long): Unit;
 
     fun setTitle(title: String?): Unit;
 
