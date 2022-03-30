@@ -3,154 +3,139 @@ package org.hyt.hytport.audio.service
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.audiofx.Visualizer
 import android.os.Handler
 import android.os.Looper
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedDeque
 
 class HYTBaseAudioPlayer public constructor(
-    context: Context,
-    completion: () -> Unit
+    queueProvider: ((Deque<HYTAudioModel>) -> Unit) -> Unit,
+    context: Context
 ) : HYTAudioPlayer {
 
-    private val _queue: Deque<HYTAudioModel>;
+    companion object {
 
-    private val _player: MediaPlayer;
+        private val _DEFAULT_AUDITOR: HYTAudioPlayer.Companion.HYTAuditor =
+            object : HYTAudioPlayer.Companion.HYTAuditor {};
+
+        private val _DEFAULT_AUDIO_ATTRIBUTES: AudioAttributes = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .build();
+
+    }
 
     private val _context: Context;
 
-    private var _consumer: (ByteArray) -> Unit = {};
+    private val _queueProvider: ((Deque<HYTAudioModel>) -> Unit) -> Unit;
 
-    private var _progress: (Int) -> (Int) -> Unit = {{}};
+    private var _auditor: HYTAudioPlayer.Companion.HYTAuditor;
 
-    private var _progressTime: (Int) -> Unit = {};
+    private val _player: MediaPlayer;
 
-    private val _visualizer: Visualizer;
+    private var _prepared: Boolean = false;
 
-    private inner class HYTDataListener : Visualizer.OnDataCaptureListener {
+    private val _progressDelegator: Handler;
 
-        override fun onWaveFormDataCapture(visualizer: Visualizer?, buffer: ByteArray?, rating: Int) {
-            _consumer.invoke(buffer!!);
-        }
-
-        override fun onFftDataCapture(visualizer: Visualizer?, buffer: ByteArray?, rating: Int) {
-            return;
-        }
-
-    }
+    private val _progressWorker: Runnable;
 
     init {
-        _queue = ConcurrentLinkedDeque();
-        _player = MediaPlayer();
         _context = context;
+        _queueProvider = queueProvider;
+        _auditor = _DEFAULT_AUDITOR;
+        _player = MediaPlayer();
         _player.setOnCompletionListener {
-            completion();
-        }
+            _queueCheck { queue: Deque<HYTAudioModel> ->
+                _auditor.onComplete(queue.first);
+            }
+        };
         _player.setOnPreparedListener {
-            _progressTime = _progress(_player.duration);
+            _prepared = true;
             if (!_player.isPlaying) {
                 _player.start();
             }
-        }
-        _visualizer = Visualizer(_player.audioSessionId);
-        _visualizer.captureSize = Visualizer.getCaptureSizeRange()[1];
-        _visualizer.setDataCaptureListener(
-            HYTDataListener(),
-            Visualizer.getMaxCaptureRate() / 2,
-            true,
-            false
-        );
-        _visualizer.scalingMode = Visualizer.SCALING_MODE_AS_PLAYED;
-        val handler: Handler = Handler(Looper.getMainLooper());
-        handler.postDelayed(
-            object: Runnable{
-                override fun run() {
-                    _progressTime(_player.currentPosition);
-                    handler.postDelayed(this, 1000);
-                }
-            },
-          1000
-        );
+        };
+        _progressDelegator = Handler(Looper.getMainLooper());
+        _progressWorker = object : Runnable {
+
+            override fun run() {
+                _auditor.progress(_player.duration, _player.currentPosition);
+                _progressDelegator.postDelayed(this, 1000);
+            }
+
+        };
+        _progressDelegator.postDelayed(_progressWorker, 1000);
     }
 
-
-    override fun play(): HYTAudioModel {
-        if (!_player.isPlaying) {
-            _visualizer.enabled = true;
-            _player.start();
-        }
-        return _queue.last;
-    }
-
-    override fun play(audio: HYTAudioModel): HYTAudioModel {
-        return try {
-            val actual: HYTAudioModel = _queue.first {
-                it.getId() == audio.getId();
-            };
-            _queue.remove(actual);
-            _queue.offerFirst(actual);
-            next();
-        } catch (exception: Exception) {
-            audio;
+    override fun play() {
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            val current: HYTAudioModel = queue.first;
+            if (!_prepared) {
+                _reset(current);
+            } else if (!_player.isPlaying) {
+                _player.start();
+            }
+            _auditor.onPlay(current);
         }
     }
 
-    override fun pause(): HYTAudioModel {
+    override fun isPlaying(consumer: (Boolean) -> Unit) {
+        consumer(_player.isPlaying);
+    }
+
+    override fun current(consumer: (HYTAudioModel) -> Unit) {
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            consumer(queue.first);
+        }
+    }
+
+    override fun pause() {
         if (_player.isPlaying) {
             _player.pause();
         }
-        return _queue.last;
-    }
-
-    override fun next(): HYTAudioModel {
-        val audio: HYTAudioModel? = _queue.poll();
-        _reset(audio);
-        return audio!!;
-    }
-
-    override fun previous(): HYTAudioModel {
-        _queue.offerFirst(_queue.pollLast());
-        val audio: HYTAudioModel? = _queue.pollLast();
-        _reset(audio);
-        return audio!!;
-    }
-
-    private fun _reset(audio: HYTAudioModel?): Unit {
-        if (audio != null) {
-            _player.reset();
-            _visualizer.enabled = true;
-            _player.setDataSource(_context, audio.getPath()!!);
-            _player.setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .build()
-            );
-            _player.prepareAsync();
-            _queue.offer(audio);
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            _auditor.onPause(queue.first);
         }
     }
 
-    override fun addNext(next: HYTAudioModel) {
-        if (!_queue.any { audio -> audio.getId() == next.getId() }) {
-            _queue.offer(next);
+    override fun next() {
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            queue.offer(queue.pop());
+            val next: HYTAudioModel = queue.first;
+            _reset(next);
+            _auditor.onNext(next);
         }
     }
 
-    override fun queue(consumer: (Deque<HYTAudioModel>) -> Unit): Unit {
-        consumer(_queue);
+    override fun previous() {
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            queue.offerFirst(queue.pollLast());
+            val previous: HYTAudioModel = queue.first;
+            _reset(previous);
+            _auditor.onPrevious(previous);
+        }
     }
 
-    override fun isPlaying(): Boolean {
-        return _player.isPlaying;
+    private fun _reset(audio: HYTAudioModel): Unit {
+        _prepared = false;
+        _player.reset();
+        _player.setDataSource(
+            _context,
+            audio.getPath()!!
+        );
+        _player.setAudioAttributes(_DEFAULT_AUDIO_ATTRIBUTES);
+        _player.prepareAsync();
+    }
+
+    override fun seek(to: Int) {
+        _player.seekTo(to);
     }
 
     override fun destroy() {
-        _visualizer.enabled = false;
-        _visualizer.release();
+        _auditor.onDestroy();
+        resetAuditor();
+        _progressDelegator.removeCallbacks(_progressWorker);
         if (_player.isPlaying) {
             _player.stop();
         }
@@ -158,16 +143,23 @@ class HYTBaseAudioPlayer public constructor(
         _player.release();
     }
 
-    override fun consumer(consumer: (ByteArray) -> Unit) {
-        _consumer = consumer;
+    override fun setAuditor(auditor: HYTAudioPlayer.Companion.HYTAuditor) {
+        _auditor = auditor;
+        _queueCheck { queue: Deque<HYTAudioModel> ->
+            _auditor.onReady(queue.first);
+        }
     }
 
-    override fun progress(consumer: (Int) -> (Int) -> Unit) {
-        _progress = consumer;
+    override fun resetAuditor() {
+        _auditor = _DEFAULT_AUDITOR;
     }
 
-    override fun seek(to: Int) {
-        _player.seekTo(to);
+    private fun _queueCheck(reaction: (Deque<HYTAudioModel>) -> Unit): Unit {
+        _queueProvider { queue: Deque<HYTAudioModel> ->
+            if (queue.isNotEmpty()) {
+                reaction(queue);
+            }
+        }
     }
 
 }
