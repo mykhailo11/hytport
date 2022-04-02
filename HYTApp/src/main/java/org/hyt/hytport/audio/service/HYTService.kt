@@ -12,14 +12,22 @@ import android.os.IBinder
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
+import org.hyt.hytport.audio.api.model.HYTAudioModel
+import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
+import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
 import org.hyt.hytport.audio.util.HYTAudioUtil
 import org.hyt.hytport.util.HYTUtil
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedDeque
 
-class HYTService: Service() {
+class HYTService : Service() {
 
     private lateinit var _binder: HYTBinder;
+
+    private lateinit var _player: HYTAudioPlayer;
 
     private var _playIntent: String? = null;
 
@@ -28,6 +36,7 @@ class HYTService: Service() {
     private var _previousIntent: String? = null;
 
     private var _destroyIntent: String? = null;
+
 
     private lateinit var _mediaSession: MediaSession;
 
@@ -43,6 +52,16 @@ class HYTService: Service() {
             this,
             _binder
         );
+        val repository: HYTAudioRepository = HYTAudioFactory.getAudioRepository(contentResolver);
+        val queue: Deque<HYTAudioModel> = ConcurrentLinkedDeque();
+        repository.getAllAudio {
+            queue.addAll(it);
+        }
+        _player = HYTAudioPlayerFactory.getAudioPlayer(this)
+        { queueConsumer: (Deque<HYTAudioModel>) -> Unit ->
+            queueConsumer(queue);
+        };
+        _binder.setPlayer(_player);
         val id: String = resources.getString(R.string.hyt_channel);
         val notificationChannel: NotificationChannel = NotificationChannel(
             id,
@@ -112,13 +131,15 @@ class HYTService: Service() {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
     override fun onDestroy() {
         _binder.destroy();
+        _player.destroy();
         _mediaSession.release();
         super.onDestroy();
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent?): IBinder {
         return _binder;
     }
 

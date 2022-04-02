@@ -137,10 +137,9 @@ class HYTWrapperBinder: Binder(), HYTBinder {
     }
 
     override fun destroy() {
-        _playerCheck { player: HYTAudioPlayer ->
-            player.destroy();
-            _player = null;
-        }
+        _visualizer.enabled = false;
+        _visualizer.release();
+        _player = null;
     }
 
     override fun setAuditor(auditor: HYTAudioPlayer.Companion.HYTAuditor) {
