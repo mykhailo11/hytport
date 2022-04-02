@@ -1,6 +1,7 @@
 package org.hyt.hytport.audio.api.service
 
 import org.hyt.hytport.audio.api.model.HYTAudioModel
+import java.util.*
 
 interface HYTAudioPlayer {
 
@@ -33,6 +34,8 @@ interface HYTAudioPlayer {
     fun isPlaying(consumer: (Boolean) -> Unit): Unit;
 
     fun current(consumer: (HYTAudioModel) -> Unit): Unit;
+
+    fun queue(consumer: (Deque<HYTAudioModel>) -> Unit): Unit
 
     fun pause(): Unit;
 
