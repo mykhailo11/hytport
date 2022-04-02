@@ -5,6 +5,7 @@ import android.os.Binder
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
+import java.util.*
 import kotlin.collections.ArrayList
 
 class HYTWrapperBinder: Binder(), HYTBinder {
@@ -109,6 +110,12 @@ class HYTWrapperBinder: Binder(), HYTBinder {
     override fun current(consumer: (HYTAudioModel) -> Unit) {
         _playerCheck { player: HYTAudioPlayer ->
             player.current(consumer);
+        }
+    }
+
+    override fun queue(consumer: (Deque<HYTAudioModel>) -> Unit) {
+        _playerCheck { player: HYTAudioPlayer ->
+            player.queue(consumer);
         }
     }
 
