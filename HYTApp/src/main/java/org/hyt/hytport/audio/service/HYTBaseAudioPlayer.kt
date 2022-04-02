@@ -92,6 +92,10 @@ class HYTBaseAudioPlayer public constructor(
         }
     }
 
+    override fun queue(consumer: (Deque<HYTAudioModel>) -> Unit) {
+        _queueProvider(consumer);
+    }
+
     override fun pause() {
         if (_prepared && _player.isPlaying) {
             _player.pause();
