@@ -101,6 +101,12 @@ class HYTWrapperBinder: Binder(), HYTBinder {
         }
     }
 
+    override fun play(audio: HYTAudioModel) {
+        _playerCheck { player: HYTAudioPlayer ->
+            player.play(audio);
+        }
+    }
+
     override fun isPlaying(consumer: (Boolean) -> Unit) {
         _playerCheck { player: HYTAudioPlayer ->
             player.isPlaying(consumer);
