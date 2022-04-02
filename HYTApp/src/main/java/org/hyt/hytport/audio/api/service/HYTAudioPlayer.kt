@@ -31,6 +31,8 @@ interface HYTAudioPlayer {
 
     fun play(): Unit;
 
+    fun play(audio: HYTAudioModel): Unit;
+
     fun isPlaying(consumer: (Boolean) -> Unit): Unit;
 
     fun current(consumer: (HYTAudioModel) -> Unit): Unit;
