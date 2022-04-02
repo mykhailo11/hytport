@@ -60,7 +60,9 @@ class HYTBaseAudioPlayer public constructor(
         _progressWorker = object : Runnable {
 
             override fun run() {
-                _auditor.progress(_player.duration, _player.currentPosition);
+                if (_prepared && _player.isPlaying){
+                    _auditor.progress(_player.duration, _player.currentPosition);
+                }
                 _progressDelegator.postDelayed(this, 1000);
             }
 
@@ -81,7 +83,7 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun isPlaying(consumer: (Boolean) -> Unit) {
-        consumer(_player.isPlaying);
+        consumer(_prepared && _player.isPlaying);
     }
 
     override fun current(consumer: (HYTAudioModel) -> Unit) {
@@ -91,7 +93,7 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun pause() {
-        if (_player.isPlaying) {
+        if (_prepared && _player.isPlaying) {
             _player.pause();
         }
         _queueCheck { queue: Deque<HYTAudioModel> ->
@@ -129,7 +131,9 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun seek(to: Int) {
-        _player.seekTo(to);
+        if (_prepared){
+            _player.seekTo(to);
+        }
     }
 
     override fun destroy() {
