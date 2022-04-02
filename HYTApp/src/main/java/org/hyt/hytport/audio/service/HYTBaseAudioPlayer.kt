@@ -82,6 +82,24 @@ class HYTBaseAudioPlayer public constructor(
         }
     }
 
+    override fun play(audio: HYTAudioModel) {
+        _queueProvider { queue: Deque<HYTAudioModel> ->
+            val existing: HYTAudioModel? = queue.find {
+                it.getId() == audio.getId()
+            };
+            if (existing != null) {
+                queue.remove(existing);
+                queue.offerFirst(existing);
+                _reset(existing);
+                _auditor.onNext(existing);
+            } else {
+                queue.offerFirst(audio);
+                _reset(audio);
+                _auditor.onNext(audio);
+            }
+        }
+    }
+
     override fun isPlaying(consumer: (Boolean) -> Unit) {
         consumer(_prepared && _player.isPlaying);
     }
