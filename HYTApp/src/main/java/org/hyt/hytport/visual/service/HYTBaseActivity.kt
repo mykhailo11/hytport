@@ -11,10 +11,11 @@ import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.visual.old.service.HYTInit
 import androidx.compose.runtime.*;
-import androidx.compose.ui.platform.LocalContext
 import org.hyt.hytport.audio.service.HYTService
 
 abstract class HYTBaseActivity : ComponentActivity() {
+
+    private var _connection: ServiceConnection? = null;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
@@ -31,12 +32,9 @@ abstract class HYTBaseActivity : ComponentActivity() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         window.navigationBarColor = getColor(R.color.hyt_transparent);
         volumeControlStream = AudioManager.STREAM_MUSIC;
+        val intent: Intent = Intent(this, HYTService::class.java);
         setContent {
             var player: HYTBinder? by remember { mutableStateOf(null) };
-            val context: Context = LocalContext.current;
-            val intent: Intent by derivedStateOf {
-                Intent(context, HYTService::class.java);
-            };
             val connection: ServiceConnection by derivedStateOf {
                 object : ServiceConnection {
 
@@ -44,11 +42,13 @@ abstract class HYTBaseActivity : ComponentActivity() {
                         if (binder != null) {
                             player = binder as HYTBinder?;
                         }
+                        _connection = this;
                     }
 
                     override fun onServiceDisconnected(component: ComponentName?) {
-                        context.unbindService(this);
+                        unbindService(this);
                         player = null;
+                        _connection = null;
                     }
 
                 }
@@ -59,21 +59,13 @@ abstract class HYTBaseActivity : ComponentActivity() {
             ) {
                 if (player == null) {
                     value = false;
-                    context.startService(intent);
-                    context.bindService(intent, connection, 0);
+                    startService(intent);
+                    bindService(intent, connection, 0);
                 } else {
                     value = true;
                 }
             }
-            DisposableEffect(context) {
-                onDispose {
-                    if (bound) {
-                        context.unbindService(connection);
-                        player = null;
-                    }
-                }
-            }
-            if (player != null) {
+            if (bound && player != null) {
                 compose(player!!);
             }
         }
@@ -83,6 +75,9 @@ abstract class HYTBaseActivity : ComponentActivity() {
     protected abstract fun compose(player: HYTBinder);
 
     override fun onDestroy() {
+        if (_connection != null) {
+            unbindService(_connection!!);
+        }
         super.onDestroy()
     }
 
