@@ -5,28 +5,52 @@ import java.util.*
 
 interface HYTAudioPlayer {
 
-    fun play(): HYTAudioModel;
+    companion object {
 
-    fun play(audio: HYTAudioModel): HYTAudioModel;
+        interface HYTAuditor {
 
-    fun isPlaying(): Boolean;
+            fun onReady(audio: HYTAudioModel): Unit{}
 
-    fun pause(): HYTAudioModel;
+            fun onPlay(audio: HYTAudioModel, current: Long): Unit{}
 
-    fun next(): HYTAudioModel;
+            fun onPause(audio: HYTAudioModel, current: Long): Unit{}
 
-    fun previous(): HYTAudioModel;
+            fun onNext(audio: HYTAudioModel): Unit{}
 
-    fun addNext(next: HYTAudioModel);
+            fun onPrevious(audio: HYTAudioModel): Unit{}
 
-    fun queue(consumer: (Deque<HYTAudioModel>) -> Unit): Unit;
+            fun onComplete(audio: HYTAudioModel): Unit{}
 
-    fun consumer(consumer: (ByteArray) -> Unit): Unit;
+            fun progress(duration: Int, current: Int): Unit{}
 
-    fun progress(consumer: (Int) -> (Int) -> Unit): Unit;
+            fun onDestroy(): Unit{}
+
+        }
+
+    }
+
+    fun play(): Unit;
+
+    fun play(audio: HYTAudioModel): Unit;
+
+    fun isPlaying(consumer: (Boolean) -> Unit): Unit;
+
+    fun current(consumer: (HYTAudioModel) -> Unit): Unit;
+
+    fun queue(consumer: (Deque<HYTAudioModel>) -> Unit): Unit
+
+    fun pause(): Unit;
+
+    fun next(): Unit;
+
+    fun previous(): Unit;
 
     fun seek(to: Int): Unit;
 
-    fun destroy();
+    fun destroy(): Unit;
+
+    fun setAuditor(auditor: HYTAuditor): Unit;
+
+    fun resetAuditor(): Unit;
 
 }

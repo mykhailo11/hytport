@@ -5,7 +5,7 @@ import org.hyt.hytport.audio.api.model.HYTAudioModel
 
 class HYTBaseAudioModel: HYTAudioModel{
 
-    private var _id: Long? = 0L;
+    private var _id: Long = 0L;
 
     private var _title: String?;
 
@@ -27,7 +27,7 @@ class HYTBaseAudioModel: HYTAudioModel{
         _path = null;
     }
 
-    override fun getId(): Long? {
+    override fun getId(): Long {
         return _id;
     }
 
@@ -47,7 +47,7 @@ class HYTBaseAudioModel: HYTAudioModel{
         return _duration;
     }
 
-    override fun setId(id: Long?): Unit {
+    override fun setId(id: Long): Unit {
         _id = id;
     }
 

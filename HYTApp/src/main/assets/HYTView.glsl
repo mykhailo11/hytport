@@ -42,12 +42,12 @@ void main(){
     float average = computed.y;
     computed = getState(((point.x - computed.x) * sin(-time + average * 5.0 + point.y * sin(time * 0.5)) + point.y * cos(-time + average + point.y + 0.5) * sin(time * 0.5) + 2.0) / 4.0, smoothness + 0.1 * computed.x, pulseStates) - computed * 0.8;
     float cummulativeState = computed.x;
-    vec2 fraction = vec2(mod(time + point.x, 16.0) / 16.0, mod(-time + 8.0 * computed.x * length(vec2(cummulativeState, point.x)), 40.0 - average) / (40.0 - average));
+    vec2 fraction = vec2(mod(time + point.x, 16.0) / 16.0, mod(-time + 8.0 * computed.x * length(vec2(cummulativeState, point.x)), 40.0) / 40.0);
     vec4 color = getPalette(fraction.y);
-    fragmentColor = color * (abs(cummulativeState) * 0.6 + (average + computed.y) * 0.2);
+    fragmentColor = color * (abs(cummulativeState) * 0.4 + (average + computed.y) * 0.3) * (point.x + point.y + 4.0) / 2.0;
     color = getPalette(fraction.x) * (0.2 + 0.8 * abs(cummulativeState));
     if (mod(sin(sin(point.x + point.y + time * 0.1) * 3.14 * 2.0) * 0.1 / (0.5 + average) + point.y * 0.4 - cummulativeState, 0.4) < (cummulativeState + 2.0)  * thick){
-        fragmentColor += (color * clamp((point.y + point.x - cummulativeState * 0.5 + 0.5), 0.4, 1.0) * (0.8 + 0.2 * cummulativeState));
+        fragmentColor += (color * clamp((point.y + point.x + cummulativeState * 0.5 + 0.5), 0.4, 1.0) * (0.8 + 0.2 * cummulativeState));
     }
     if (mod(point.x + point.y * sin(-average) - 0.2 + point.x * 0.2 - cummulativeState, 0.2 / average) < (cummulativeState + 2.0) * thick){
         fragmentColor += vec4(0.1);

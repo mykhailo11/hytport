@@ -1,34 +1,34 @@
 package org.hyt.hytport.audio.service
 
-import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.graphics.Color
-import android.media.session.MediaSession
-import android.media.session.PlaybackState
-import android.os.Binder
+import android.graphics.BitmapFactory
 import android.os.IBinder
-import android.widget.RemoteViews
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.DecoratedMediaCustomViewStyle
+import androidx.media.session.MediaButtonReceiver
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
-import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
+import org.hyt.hytport.audio.util.HYTAudioUtil
 import org.hyt.hytport.util.HYTUtil
 import java.util.*
-import kotlin.collections.ArrayList
+import java.util.concurrent.ConcurrentLinkedDeque
 
 class HYTService : Service() {
 
     private lateinit var _binder: HYTBinder;
 
-    private lateinit var _mediaSession: MediaSession;
+    private lateinit var _player: HYTAudioPlayer;
 
     private var _playIntent: String? = null;
 
@@ -38,106 +38,183 @@ class HYTService : Service() {
 
     private var _destroyIntent: String? = null;
 
+    private lateinit var _mediaSessionEditor: (
+            (
+            MediaSessionCompat,
+            PlaybackStateCompat.Builder
+        ) -> Unit
+    ) -> Unit;
+
+    private lateinit var _notificationEditor: (
+            (
+            NotificationCompat.Builder,
+            NotificationManager
+        ) -> Unit
+    ) -> Unit;
+
+    private lateinit var _auditor: HYTBinder.Companion.HYTAuditor;
+
     override fun onCreate() {
         super.onCreate();
+        _binder = HYTAudioFactory.getBinder();
         _playIntent = resources.getString(R.string.hyt_service_play);
         _nextIntent = resources.getString(R.string.hyt_service_next);
         _previousIntent = resources.getString(R.string.hyt_service_previous);
         _destroyIntent = resources.getString(R.string.hyt_service_destroy);
-        _binder = HYTAudioFactory.getBinder(HYTAudioPlayerFactory.getAudioPlayer(this) {
-            _binder.next();
-        });
-        _mediaSession = MediaSession(this, "hyt_session");
-        _mediaSession.setCallback(object : MediaSession.Callback() {
-
-            override fun onPlay() {
-                _binder.play()
-            }
-
-            override fun onPause() {
-                _binder.pause();
-            }
-
-            override fun onSkipToNext() {
-                _binder.next();
-            }
-
-            override fun onSkipToPrevious() {
-                _binder.previous();
-            }
-
-        });
-        _mediaSession.setPlaybackState(
-            PlaybackState.Builder()
-                .setActions(
-                    PlaybackState.ACTION_PLAY or
-                            PlaybackState.ACTION_PAUSE or
-                            PlaybackState.ACTION_SKIP_TO_NEXT or
-                            PlaybackState.ACTION_SKIP_TO_PREVIOUS
-                )
-                .build()
-        )
-        val notificationChannel: NotificationChannel = NotificationChannel(
-            "hyt_channel",
-            "HYT Channel",
-            NotificationManager.IMPORTANCE_DEFAULT
-        );
-        notificationChannel.lightColor = Color.YELLOW;
-        notificationChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC;
-        val notificationManager: NotificationManager = getSystemService(
-            Context.NOTIFICATION_SERVICE
-        ) as NotificationManager;
-        notificationManager.createNotificationChannel(notificationChannel);
-        val playerView: RemoteViews = RemoteViews("org.hyt.hytport", R.layout.hyt_player);
-        _initViewIntents(playerView);
-        val notification: Notification = NotificationCompat.Builder(
+        _mediaSessionEditor = HYTAudioUtil.mediaSession(
+            javaClass.canonicalName!!,
             this,
-            "hyt_channel"
-        )
-            .setSmallIcon(R.drawable.hyt_player_icon_200dp)
-            .setColor(Color.YELLOW)
-            .setCustomContentView(playerView)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build();
-        startForeground(100, notification);
-    }
+            _binder
+        );
+        val repository: HYTAudioRepository = HYTAudioFactory.getAudioRepository(contentResolver);
+        val queue: Deque<HYTAudioModel> = ConcurrentLinkedDeque();
+        repository.getAllAudio {
+            queue.addAll(it);
+        }
+        _player = HYTAudioPlayerFactory.getAudioPlayer(this)
+        { queueConsumer: (Deque<HYTAudioModel>) -> Unit ->
+            queueConsumer(queue);
+        };
+        val id: String = resources.getString(R.string.hyt_channel);
+        val destroyIntent: PendingIntent = HYTUtil.wrapIntentForService(
+            this, Intent(_destroyIntent)
+        );
+        _notificationEditor = HYTAudioUtil.notification(
+            this,
+            id,
+            R.drawable.hyt_player_icon_200dp
+        );
+        _mediaSessionEditor { mediaSession: MediaSessionCompat,
+                              _ ->
+            _notificationEditor { notificationHolder: NotificationCompat.Builder, _ ->
+                notificationHolder
+                    .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.hyt_empty_cover_200dp))
+                    .setDeleteIntent(destroyIntent)
+                    .setStyle(
+                        DecoratedMediaCustomViewStyle()
+                            .setShowCancelButton(true)
+                            .setMediaSession(mediaSession.sessionToken)
+                            .setCancelButtonIntent(destroyIntent)
+                            .setShowActionsInCompactView(
+                                0, 1, 2
+                            )
+                    )
+                    .addAction(
+                        NotificationCompat.Action.Builder(
+                            R.drawable.hyt_player_previous_24dp, "previous", HYTUtil.wrapIntentForService(
+                                this, Intent(_previousIntent)
+                            )
+                        ).build()
+                    )
+                    .addAction(
+                        NotificationCompat.Action.Builder(
+                            R.drawable.hyt_player_play_24dp, "play", HYTUtil.wrapIntentForService(
+                                this, Intent(_playIntent)
+                            )
+                        ).build()
+                    )
+                    .addAction(
+                        NotificationCompat.Action.Builder(
+                            R.drawable.hyt_player_next_24dp, "next", HYTUtil.wrapIntentForService(
+                                this, Intent(_nextIntent)
+                            )
+                        ).build()
+                    )
+                    .addAction(
+                        NotificationCompat.Action.Builder(
+                            R.drawable.hyt_destroy_24dp, "destroy", HYTUtil.wrapIntentForService(
+                                this, Intent(_destroyIntent)
+                            )
+                        ).build()
+                    )
+            }
+        }
+        _auditor = object : HYTBinder.Companion.HYTAuditor {
 
-    private fun _initViewIntents(playerView: RemoteViews): Unit {
-        playerView.setOnClickPendingIntent(
-            R.id.hyt_player_previous,
-            HYTUtil.wrapIntentForService(
-                this, Intent(_previousIntent)
-            )
-        );
-        playerView.setOnClickPendingIntent(
-            R.id.hyt_player_play,
-            HYTUtil.wrapIntentForService(
-                this, Intent(_playIntent)
-            )
-        );
-        playerView.setOnClickPendingIntent(
-            R.id.hyt_player_next,
-            HYTUtil.wrapIntentForService(
-                this, Intent(_nextIntent)
-            )
-        );
-        playerView.setOnClickPendingIntent(
-            R.id.hyt_player_close,
-            HYTUtil.wrapIntentForService(
-                this, Intent(_destroyIntent)
-            )
-        );
+            private var _metadataBuilder: MediaMetadataCompat.Builder? = null;
+
+            override fun onReady(audio: HYTAudioModel) {
+                _metadataBuilder = MediaMetadataCompat.Builder();
+                _setMetadata(audio);
+                _setNotification(audio);
+            }
+
+            override fun onNext(audio: HYTAudioModel) {
+                _setMetadata(audio);
+                _setNotification(audio);
+            }
+
+            override fun onPrevious(audio: HYTAudioModel) {
+                _setMetadata(audio);
+                _setNotification(audio);
+            }
+
+            override fun progress(duration: Int, current: Int) {
+
+            }
+
+            private fun _setMetadata(audio: HYTAudioModel): Unit {
+                if (_metadataBuilder != null) {
+                    _mediaSessionEditor { mediaSession: MediaSessionCompat,
+                                          _ ->
+                        _metadataBuilder!!
+                            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, audio.getTitle())
+                            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, audio.getArtist())
+                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, audio.getAlbum())
+                            .putBitmap(
+                                MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
+                                HYTUtil.getBitmap(audio.getAlbumPath(), contentResolver)
+                            )
+                            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, audio.getAlbumPath()?.path)
+                        mediaSession.setMetadata(
+                                _metadataBuilder!!.build()
+                        )
+                    };
+                }
+
+
+
+            }
+
+            override fun onSetPlayer(player: HYTAudioPlayer) {
+                _player.destroy();
+                _player = player;
+            }
+
+            private fun _setNotification(audio: HYTAudioModel): Unit {
+                _notificationEditor { notificationHolder: NotificationCompat.Builder,
+                                      manager: NotificationManager ->
+                    notificationHolder
+                        .setLargeIcon(HYTUtil.getBitmap(audio.getAlbumPath(), contentResolver))
+                        .setContentTitle(audio.getTitle())
+                        .setContentText(audio.getArtist());
+                    manager.notify(1, notificationHolder.build());
+                }
+            }
+
+        }
+        _binder.setPlayer(_player);
+        _binder.addAuditor(_auditor);
+        _notificationEditor { notificationHolder: NotificationCompat.Builder, _ ->
+            startForeground(1, notificationHolder.build());
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        _mediaSessionEditor { mediaSession: MediaSessionCompat,
+                              _ ->
+            MediaButtonReceiver.handleIntent(mediaSession, intent);
+        }
         if (intent != null && intent.action != null) {
             when (intent.action!!) {
                 _previousIntent -> _binder.previous();
                 _playIntent -> {
-                    if (_binder.isPlaying()) {
-                        _binder.pause();
-                    } else {
-                        _binder.play();
+                    _binder.isPlaying { playing ->
+                        if (playing) {
+                            _binder.pause();
+                        } else {
+                            _binder.play();
+                        }
                     }
                 }
                 _nextIntent -> _binder.next();
@@ -147,9 +224,19 @@ class HYTService : Service() {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
     override fun onDestroy() {
+        _binder.removeAuditor(_auditor);
         _binder.destroy();
-        _mediaSession.release();
+        _player.destroy();
+        _mediaSessionEditor { mediaSession: MediaSessionCompat,
+                              _ ->
+            mediaSession.release();
+        }
+        _notificationEditor { _, manager: NotificationManager ->
+            manager.cancelAll();
+        }
+        stopForeground(STOP_FOREGROUND_REMOVE);
         super.onDestroy();
     }
 
