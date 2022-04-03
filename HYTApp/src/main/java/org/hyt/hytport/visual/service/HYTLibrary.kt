@@ -13,6 +13,7 @@ import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.model.HYTBaseAudioModel
 import org.hyt.hytport.visual.component.library.library
+import org.hyt.hytport.visual.component.loading.loadingIcon
 import java.util.*
 
 class HYTLibrary : HYTBaseActivity() {
@@ -78,15 +79,8 @@ class HYTLibrary : HYTBaseActivity() {
         }
     }
 
-    @Preview(showSystemUi = true, showBackground = true)
     @Composable
-    fun libraryPreview(){
-        library(
-            listOf(HYTBaseAudioModel()),
-            -1L,
-            {},
-            {}
-        );
+    override fun loading() {
+        loadingIcon();
     }
-
 }

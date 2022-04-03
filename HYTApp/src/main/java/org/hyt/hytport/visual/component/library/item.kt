@@ -117,12 +117,3 @@ fun item(
         }
     }
 }
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun itemPreview(){
-    item(HYTBaseAudioModel().apply {
-        setTitle("title 1")
-        setArtist("artist 1")
-    }, false) {};
-}

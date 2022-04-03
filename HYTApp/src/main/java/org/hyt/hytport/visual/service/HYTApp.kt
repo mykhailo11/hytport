@@ -29,6 +29,7 @@ import org.hyt.hytport.graphics.factory.HYTGLFactory
 import org.hyt.hytport.util.HYTMathUtil
 import org.hyt.hytport.util.HYTUtil
 import org.hyt.hytport.visual.api.model.HYTState
+import org.hyt.hytport.visual.component.loading.loadingIcon
 import org.hyt.hytport.visual.component.player.cover
 import org.hyt.hytport.visual.component.player.player
 import org.hyt.hytport.visual.component.surface.surface
@@ -167,18 +168,7 @@ class HYTApp : HYTBaseActivity() {
 
     @Composable
     override fun loading() {
-        Image(
-          painter = painterResource(R.drawable.hyt_player_icon_200dp),
-          contentDescription = null,
-          modifier = Modifier
-              .fillMaxSize()
-              .background(
-                  brush = Brush.radialGradient(
-                      Pair(0.0f, colorResource(R.color.hyt_accent_dark)),
-                      Pair(1.0f, colorResource(R.color.hyt_dark))
-                  )
-              )
-        );
+        loadingIcon();
     }
 
     override fun onDestroy() {

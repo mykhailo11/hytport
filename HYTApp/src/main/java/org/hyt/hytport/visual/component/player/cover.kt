@@ -78,9 +78,3 @@ fun cover(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun coverPreview(){
-    cover(null);
-}
