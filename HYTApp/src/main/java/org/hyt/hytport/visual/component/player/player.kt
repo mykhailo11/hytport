@@ -1,13 +1,6 @@
 package org.hyt.hytport.visual.component.player
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.opengl.GLSurfaceView
-import android.os.Binder
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableState
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,9 +8,7 @@ import androidx.compose.material.Slider
 import androidx.compose.material.SliderDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,14 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.graphics.factory.HYTGLFactory
-import org.hyt.hytport.graphics.service.HYTCanvas
-import org.hyt.hytport.util.HYTUtil
 import org.hyt.hytport.visual.component.control.control
-import org.hyt.hytport.visual.component.surface.surface
-import org.hyt.hytport.visual.component.util.binder
 
 @Composable
 fun player(
@@ -40,6 +25,7 @@ fun player(
     modifier: Modifier = Modifier
 ) {
     var slider: Float by remember { mutableStateOf(0.0f) };
+    var sliding: Boolean by remember { mutableStateOf(false) };
     var sliderMax: Float by remember { mutableStateOf(10.0f) };
     var artist: String by remember { mutableStateOf("Artist") };
     val artistScroll = rememberScrollState();
@@ -62,8 +48,10 @@ fun player(
                 }
 
                 override fun progress(duration: Int, current: Int) {
-                    slider = current / 1000.0f;
-                    sliderMax = duration / 1000.0f;
+                    if (!sliding) {
+                        slider = current / 1000.0f;
+                        sliderMax = duration / 1000.0f;
+                    }
                 }
 
                 private fun _setMeta(
@@ -126,8 +114,14 @@ fun player(
         Slider(
             value = slider,
             enabled = true,
-            onValueChange = { slider = it },
+            onValueChange = {
+                if (!sliding) {
+                    sliding = true;
+                }
+                slider = it
+            },
             onValueChangeFinished = {
+                sliding = false;
                 player.seek((slider * 1000.0f).toInt())
             },
             colors = SliderDefaults.colors(
@@ -140,10 +134,4 @@ fun player(
             player = player
         );
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun playerPreview() {
-    player(binder);
 }

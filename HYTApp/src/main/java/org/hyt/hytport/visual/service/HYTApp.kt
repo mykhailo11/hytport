@@ -7,8 +7,8 @@ import android.graphics.Bitmap
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
@@ -31,7 +33,6 @@ import org.hyt.hytport.visual.component.player.cover
 import org.hyt.hytport.visual.component.player.player
 import org.hyt.hytport.visual.component.surface.surface
 import org.hyt.hytport.visual.factory.HYTStateFactory
-import org.hyt.hytport.visual.old.service.HYTLibrary
 
 class HYTApp : HYTBaseActivity() {
 
@@ -122,7 +123,7 @@ class HYTApp : HYTBaseActivity() {
                     visible = !visible;
                 },
                 longClick = {
-                    //startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
+                    startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
                 }
             );
             val animating: Boolean = visible || opacity > 0.0f
@@ -162,6 +163,22 @@ class HYTApp : HYTBaseActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    override fun loading() {
+        Image(
+          painter = painterResource(R.drawable.hyt_player_icon_200dp),
+          contentDescription = null,
+          modifier = Modifier
+              .fillMaxSize()
+              .background(
+                  brush = Brush.radialGradient(
+                      Pair(0.0f, colorResource(R.color.hyt_accent_dark)),
+                      Pair(1.0f, colorResource(R.color.hyt_dark))
+                  )
+              )
+        );
     }
 
     override fun onDestroy() {

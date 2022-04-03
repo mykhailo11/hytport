@@ -1,11 +1,7 @@
 package org.hyt.hytport.visual.component.util
 
-import android.os.Binder
 import androidx.compose.foundation.gestures.PressGestureScope
 import androidx.compose.ui.geometry.Offset
-import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
-import org.hyt.hytport.audio.api.service.HYTBinder
 
 fun pressed(
     pressed: () -> Unit,

@@ -1,29 +1,20 @@
 package org.hyt.hytport.visual.component.control
 
-import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.audio.service.HYTBaseAudioPlayer
-import org.hyt.hytport.audio.service.HYTService
-import org.hyt.hytport.audio.service.HYTWrapperBinder
-import org.hyt.hytport.visual.component.util.binder
 import org.hyt.hytport.visual.component.util.pressed
 
 @Composable
@@ -116,7 +107,10 @@ fun control(
             modifier = Modifier
                 .weight(1.0f)
                 .aspectRatio(1.0f)
-                .clickable {
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
                     if (playing) {
                         player.pause();
                     } else {
@@ -154,10 +148,4 @@ fun control(
                 }
         );
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun controlPreview(){
-    control(binder);
 }

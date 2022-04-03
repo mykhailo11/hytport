@@ -7,11 +7,11 @@ import android.os.IBinder
 import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.*
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.visual.old.service.HYTInit
-import androidx.compose.runtime.*;
 import org.hyt.hytport.audio.service.HYTService
+import org.hyt.hytport.visual.service.HYTInit
 
 abstract class HYTBaseActivity : ComponentActivity() {
 
@@ -67,12 +67,17 @@ abstract class HYTBaseActivity : ComponentActivity() {
             }
             if (bound && player != null) {
                 compose(player!!);
+            }else {
+                loading();
             }
         }
     }
 
     @Composable
     protected abstract fun compose(player: HYTBinder);
+
+    @Composable
+    protected open fun loading(){}
 
     override fun onDestroy() {
         if (_connection != null) {
