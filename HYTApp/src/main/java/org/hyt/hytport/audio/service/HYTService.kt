@@ -140,43 +140,13 @@ class HYTService : Service() {
             }
 
             override fun onNext(audio: HYTAudioModel) {
-                _mediaSessionEditor { mediaSession: MediaSessionCompat,
-                                      playbackHolder: PlaybackStateCompat.Builder ->
-                    playbackHolder
-                        .setState(PlaybackStateCompat.STATE_PLAYING, 0L, 1.0f)
-                    mediaSession.setPlaybackState(playbackHolder.build());
-                }
                 _setMetadata(audio);
                 _setNotification(audio);
             }
 
             override fun onPrevious(audio: HYTAudioModel) {
-                _mediaSessionEditor { mediaSession: MediaSessionCompat,
-                                      playbackHolder: PlaybackStateCompat.Builder ->
-                    playbackHolder
-                        .setState(PlaybackStateCompat.STATE_PLAYING, 0L, 1.0f)
-                    mediaSession.setPlaybackState(playbackHolder.build());
-                }
                 _setMetadata(audio);
                 _setNotification(audio);
-            }
-
-            override fun onPlay(audio: HYTAudioModel, current: Long) {
-                _mediaSessionEditor { mediaSession: MediaSessionCompat,
-                                      playbackHolder: PlaybackStateCompat.Builder ->
-                    playbackHolder
-                        .setState(PlaybackStateCompat.STATE_PLAYING, current, 1.0f)
-                    mediaSession.setPlaybackState(playbackHolder.build());
-                }
-            }
-
-            override fun onPause(audio: HYTAudioModel, current: Long) {
-                _mediaSessionEditor { mediaSession: MediaSessionCompat,
-                                      playbackHolder: PlaybackStateCompat.Builder ->
-                    playbackHolder
-                        .setState(PlaybackStateCompat.STATE_PAUSED, current, 1.0f)
-                    mediaSession.setPlaybackState(playbackHolder.build());
-                }
             }
 
             override fun progress(duration: Int, current: Int) {
@@ -196,10 +166,6 @@ class HYTService : Service() {
                                 HYTUtil.getBitmap(audio.getAlbumPath(), contentResolver)
                             )
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, audio.getAlbumPath()?.path)
-                        val duration: Long? = audio.getDuration();
-                        if (duration != null) {
-                            _metadataBuilder!!.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration);
-                        }
                         mediaSession.setMetadata(
                                 _metadataBuilder!!.build()
                         )
@@ -222,7 +188,7 @@ class HYTService : Service() {
                         .setLargeIcon(HYTUtil.getBitmap(audio.getAlbumPath(), contentResolver))
                         .setContentTitle(audio.getTitle())
                         .setContentText(audio.getArtist());
-                    manager.notify(0, notificationHolder.build());
+                    manager.notify(1, notificationHolder.build());
                 }
             }
 
@@ -230,7 +196,7 @@ class HYTService : Service() {
         _binder.setPlayer(_player);
         _binder.addAuditor(_auditor);
         _notificationEditor { notificationHolder: NotificationCompat.Builder, _ ->
-            startForeground(0, notificationHolder.build());
+            startForeground(1, notificationHolder.build());
         }
     }
 

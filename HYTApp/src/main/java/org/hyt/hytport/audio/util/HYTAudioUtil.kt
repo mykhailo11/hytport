@@ -42,6 +42,15 @@ class HYTAudioUtil {
                 context,
                 id
             );
+            val playbackStateHolder: PlaybackStateCompat.Builder = PlaybackStateCompat.Builder()
+                .setActions(
+                    PlaybackStateCompat.ACTION_PLAY or
+                            PlaybackStateCompat.ACTION_PAUSE or
+                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                            //PlaybackStateCompat.ACTION_SEEK_TO
+                )
+                .setState(PlaybackStateCompat.STATE_NONE, 0L, 1.0f);
             mediaSession.setCallback(
                 object : MediaSessionCompat.Callback() {
 
@@ -80,15 +89,6 @@ class HYTAudioUtil {
 
                 }
             );
-            val playbackStateHolder: PlaybackStateCompat.Builder = PlaybackStateCompat.Builder()
-                .setActions(
-                    PlaybackStateCompat.ACTION_PLAY or
-                            PlaybackStateCompat.ACTION_PAUSE or
-                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                            PlaybackStateCompat.ACTION_SEEK_TO
-                )
-                .setState(PlaybackStateCompat.STATE_NONE, 0L, 1.0f);
             mediaSession.setPlaybackState(playbackStateHolder.build());
             mediaSession.isActive = true;
             return { consumer: (MediaSessionCompat, PlaybackStateCompat.Builder) -> Unit ->
