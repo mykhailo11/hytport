@@ -1,9 +1,6 @@
 package org.hyt.hytport.audio.api.service
 
 import android.os.IBinder
-import org.hyt.hytport.audio.api.access.HYTAudioRepository
-import org.hyt.hytport.audio.api.model.HYTAudioModel
-import java.util.*
 
 interface HYTBinder: HYTAudioPlayer, IBinder {
 
