@@ -5,24 +5,20 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Window
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.runtime.*
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.service.HYTService
+import org.hyt.hytport.visual.service.HYTInit
 
-abstract class HYTBaseActivity: AppCompatActivity() {
-
-    protected var _auditor: HYTBinder.Companion.HYTAuditor? = null;
-
-    protected lateinit var _player: HYTBinder;
+abstract class HYTBaseActivity : ComponentActivity() {
 
     private var _connection: ServiceConnection? = null;
 
-    protected var _bound: Boolean = false;
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState);
         val preferences: SharedPreferences = getSharedPreferences(
             resources.getString(R.string.preferences),
             Context.MODE_PRIVATE
@@ -35,50 +31,59 @@ abstract class HYTBaseActivity: AppCompatActivity() {
         }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         window.navigationBarColor = getColor(R.color.hyt_transparent);
-        supportActionBar?.hide();
         volumeControlStream = AudioManager.STREAM_MUSIC;
-        _connection = object : ServiceConnection {
+        val intent: Intent = Intent(this, HYTService::class.java);
+        setContent {
+            var player: HYTBinder? by remember { mutableStateOf(null) };
+            val connection: ServiceConnection by derivedStateOf {
+                object : ServiceConnection {
 
-            override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
-                _player = binder as HYTBinder;
-                _auditor = _getAuditor();
-                if (_auditor != null){
-                    _player.addAuditor(_auditor!!);
+                    override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
+                        if (binder != null) {
+                            player = binder as HYTBinder?;
+                        }
+                        _connection = this;
+                    }
+
+                    override fun onServiceDisconnected(component: ComponentName?) {
+                        unbindService(this);
+                        player = null;
+                        _connection = null;
+                    }
+
                 }
-                _preparePlayer();
-                if (_player.getRepository() == null) {
-                    _player.setRepository(HYTAudioFactory.getAudioRepository(contentResolver));
+            }
+            val bound: Boolean by produceState(
+                initialValue = false,
+                player
+            ) {
+                if (player == null) {
+                    value = false;
+                    startService(intent);
+                    bindService(intent, connection, 0);
+                } else {
+                    value = true;
                 }
-                _bound = true;
             }
-
-            override fun onServiceDisconnected(component: ComponentName?) {
-                _bound = false;
+            if (bound && player != null) {
+                compose(player!!);
+            }else {
+                loading();
             }
-
-        };
-        _startPlayer();
-    }
-
-    protected fun _startPlayer(): Unit{
-        if (!_bound && _connection != null){
-            startService(Intent(this, HYTService::class.java));
-            bindService(Intent(this, HYTService::class.java), _connection!!, 0);
         }
     }
 
-    protected abstract fun _getAuditor(): HYTBinder.Companion.HYTAuditor?;
+    @Composable
+    protected abstract fun compose(player: HYTBinder);
 
-    protected open fun _preparePlayer(): Unit {}
+    @Composable
+    protected open fun loading(){}
 
     override fun onDestroy() {
-        if (_auditor != null && _bound){
-            _player.removeAuditor(_auditor!!);
-        }
-        if (_connection != null){
+        if (_connection != null) {
             unbindService(_connection!!);
         }
-        super.onDestroy();
+        super.onDestroy()
     }
 
 }
