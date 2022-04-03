@@ -42,7 +42,7 @@ void main(){
     float average = computed.y;
     computed = getState(((point.x - computed.x) * sin(-time + average * 5.0 + point.y * sin(time * 0.5)) + point.y * cos(-time + average + point.y + 0.5) * sin(time * 0.5) + 2.0) / 4.0, smoothness + 0.1 * computed.x, pulseStates) - computed * 0.8;
     float cummulativeState = computed.x;
-    vec2 fraction = vec2(mod(time + point.x, 16.0) / 16.0, mod(-time + 8.0 * computed.x * length(vec2(cummulativeState, point.x)), 40.0 - average) / (40.0 - average));
+    vec2 fraction = vec2(mod(time + point.x, 16.0) / 16.0, mod(-time + 8.0 * computed.x * length(vec2(cummulativeState, point.x)), 40.0) / 40.0);
     vec4 color = getPalette(fraction.y);
     fragmentColor = color * (abs(cummulativeState) * 0.4 + (average + computed.y) * 0.3) * (point.x + point.y + 4.0) / 2.0;
     color = getPalette(fraction.x) * (0.2 + 0.8 * abs(cummulativeState));
