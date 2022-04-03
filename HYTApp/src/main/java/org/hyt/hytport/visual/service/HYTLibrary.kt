@@ -79,8 +79,4 @@ class HYTLibrary : HYTBaseActivity() {
         }
     }
 
-    @Composable
-    override fun loading() {
-        loadingIcon();
-    }
 }
