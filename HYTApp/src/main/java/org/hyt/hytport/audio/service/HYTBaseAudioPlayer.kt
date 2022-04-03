@@ -63,11 +63,11 @@ class HYTBaseAudioPlayer public constructor(
                 if (_prepared && _player.isPlaying){
                     _auditor.progress(_player.duration, _player.currentPosition);
                 }
-                _progressDelegator.postDelayed(this, 1000);
+                _progressDelegator.postDelayed(this, 500);
             }
 
         };
-        _progressDelegator.postDelayed(_progressWorker, 1000);
+        _progressDelegator.postDelayed(_progressWorker, 500);
     }
 
     override fun play() {
@@ -78,7 +78,7 @@ class HYTBaseAudioPlayer public constructor(
             } else if (!_player.isPlaying) {
                 _player.start();
             }
-            _auditor.onPlay(current);
+            _auditor.onPlay(current, if (_prepared) _player.currentPosition.toLong() else 0L);
         }
     }
 
@@ -119,7 +119,7 @@ class HYTBaseAudioPlayer public constructor(
             _player.pause();
         }
         _queueCheck { queue: Deque<HYTAudioModel> ->
-            _auditor.onPause(queue.first);
+            _auditor.onPause(queue.first, if (_prepared) _player.currentPosition.toLong() else 0L);
         }
     }
 

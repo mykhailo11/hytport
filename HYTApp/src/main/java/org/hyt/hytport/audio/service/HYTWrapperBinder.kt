@@ -6,7 +6,6 @@ import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
 import java.util.*
-import kotlin.collections.ArrayList
 
 class HYTWrapperBinder: Binder(), HYTBinder {
 
@@ -28,15 +27,15 @@ class HYTWrapperBinder: Binder(), HYTBinder {
                 }
             }
 
-            override fun onPlay(audio: HYTAudioModel) {
+            override fun onPlay(audio: HYTAudioModel, current: Long) {
                 _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
-                    auditor.onPlay(audio);
+                    auditor.onPlay(audio, current);
                 }
             }
 
-            override fun onPause(audio: HYTAudioModel) {
+            override fun onPause(audio: HYTAudioModel, current: Long) {
                 _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
-                    auditor.onPause(audio);
+                    auditor.onPause(audio, current);
                 }
             }
 
@@ -53,6 +52,9 @@ class HYTWrapperBinder: Binder(), HYTBinder {
             }
 
             override fun onComplete(audio: HYTAudioModel) {
+                if (_auditors.isEmpty() && _player != null){
+                    _player!!.next();
+                }
                 _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
                     auditor.onComplete(audio);
                 }

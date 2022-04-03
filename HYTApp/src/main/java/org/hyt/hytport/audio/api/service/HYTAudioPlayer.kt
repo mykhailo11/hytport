@@ -11,9 +11,9 @@ interface HYTAudioPlayer {
 
             fun onReady(audio: HYTAudioModel): Unit{}
 
-            fun onPlay(audio: HYTAudioModel): Unit{}
+            fun onPlay(audio: HYTAudioModel, current: Long): Unit{}
 
-            fun onPause(audio: HYTAudioModel): Unit{}
+            fun onPause(audio: HYTAudioModel, current: Long): Unit{}
 
             fun onNext(audio: HYTAudioModel): Unit{}
 
