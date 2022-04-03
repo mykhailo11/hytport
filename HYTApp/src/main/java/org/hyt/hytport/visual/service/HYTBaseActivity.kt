@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.audio.service.HYTService
-import org.hyt.hytport.visual.service.HYTInit
 
 abstract class HYTBaseActivity : ComponentActivity() {
 

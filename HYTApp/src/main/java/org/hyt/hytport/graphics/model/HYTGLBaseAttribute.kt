@@ -1,6 +1,5 @@
 package org.hyt.hytport.graphics.model
 
-import org.hyt.hytport.graphics.api.model.HYTGLAttribute
 import org.hyt.hytport.graphics.api.model.HYTGLStaticAttribute
 
 class HYTGLBaseAttribute public constructor(

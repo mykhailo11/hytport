@@ -1,7 +1,6 @@
 package org.hyt.hytport.graphics.model
 
 import android.opengl.GLES30
-import org.hyt.hytport.graphics.api.model.HYTGLAttribute
 import org.hyt.hytport.graphics.api.model.HYTGLData
 import org.hyt.hytport.graphics.api.model.HYTGLProgram
 import org.hyt.hytport.graphics.api.model.HYTGLStaticAttribute

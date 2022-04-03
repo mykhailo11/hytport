@@ -1,6 +1,5 @@
 package org.hyt.hytport.graphics.api.model
 
-import android.opengl.GLUtils
 import javax.microedition.khronos.opengles.GL10
 
 interface HYTGLData {
