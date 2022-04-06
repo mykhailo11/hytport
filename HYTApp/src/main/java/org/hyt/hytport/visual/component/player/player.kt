@@ -88,7 +88,7 @@ fun player(
         Column {
             Text(
                 text = title,
-                color = colorResource(R.color.hyt_grey),
+                color = colorResource(R.color.hyt_white),
                 fontSize = 28.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,

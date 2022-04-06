@@ -20,12 +20,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.audio.model.HYTBaseAudioModel
 import org.hyt.hytport.util.HYTUtil
 
 @Composable
@@ -96,7 +94,7 @@ fun item(
         ) {
             Text(
                 text = if (title == null) "unknown" else title!!,
-                color = if (current) colorResource(R.color.hyt_press) else colorResource(R.color.hyt_grey),
+                color = if (current) colorResource(R.color.hyt_press) else colorResource(R.color.hyt_white),
                 fontSize = 20.sp,
                 modifier = Modifier
                     .fillMaxWidth()
