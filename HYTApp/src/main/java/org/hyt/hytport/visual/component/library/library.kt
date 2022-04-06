@@ -49,33 +49,9 @@ fun library(
     }
     val columnState = rememberLazyListState();
     Column(
-        verticalArrangement = Arrangement.Bottom,
         modifier = Modifier
             .fillMaxSize()
     ) {
-        if (filtered.isNotEmpty()) {
-            LazyColumn(
-                state = columnState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .weight(1.0f)
-                    .padding(
-                        start = 10.dp,
-                        end = 10.dp,
-                        top = 10.dp,
-                        bottom = 0.dp
-                    )
-            ) {
-                items(
-                    items = filtered,
-                    key = { audio: HYTAudioModel ->
-                        audio.getId();
-                    }
-                ) { audio: HYTAudioModel ->
-                    item(audio, audio.getId() == current, click);
-                }
-            }
-        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -103,7 +79,7 @@ fun library(
             )
             Text(
                 text = "Search",
-                color = colorResource(R.color.hyt_grey),
+                color = colorResource(R.color.hyt_black),
                 fontSize = 18.sp,
                 modifier = Modifier
                     .background(
@@ -134,6 +110,29 @@ fun library(
                     )
                     .padding(15.dp)
             );
+        }
+        if (filtered.isNotEmpty()) {
+            LazyColumn(
+                state = columnState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1.0f)
+                    .padding(
+                        start = 10.dp,
+                        end = 10.dp,
+                        top = 10.dp,
+                        bottom = 0.dp
+                    )
+            ) {
+                items(
+                    items = filtered,
+                    key = { audio: HYTAudioModel ->
+                        audio.getId();
+                    }
+                ) { audio: HYTAudioModel ->
+                    item(audio, audio.getId() == current, click);
+                }
+            }
         }
     }
 }

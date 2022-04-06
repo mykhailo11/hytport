@@ -3,7 +3,7 @@
         android:viewportHeight="200" android:viewportWidth="200"
         android:width="200dp" xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:pivotX="100" android:pivotY="100" android:rotation="-90">
-        <path android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="@color/hyt_grey"
+        <path android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="@color/hyt_accent"
               android:strokeWidth="15" android:pathData="M15.0 145.0 L100.0 45.0 L185.0 145.0"/>
     </group>
 </vector>
