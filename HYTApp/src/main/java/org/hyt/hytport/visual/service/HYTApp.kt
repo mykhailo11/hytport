@@ -47,6 +47,8 @@ class HYTApp : HYTBaseActivity() {
 
     private lateinit var _consumer: (ByteArray) -> Unit;
 
+    private var _paused: ((Boolean) -> Unit)? = null;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -77,10 +79,18 @@ class HYTApp : HYTBaseActivity() {
 
     @Composable
     override fun compose(player: HYTBinder) {
+        val context: Context = LocalContext.current;
+        val paused: Boolean by produceState(
+            initialValue = false,
+            context
+        ) {
+            _paused = { pause: Boolean ->
+                value = pause;
+            }
+        };
         var visible: Boolean by remember { mutableStateOf(true) };
         val opacity: Float by animateFloatAsState(if (visible) 1.0f else 0.0f);
         var cover: Bitmap? by remember { mutableStateOf(null) };
-        val context: Context = LocalContext.current;
         val auditor: HYTBinder.Companion.HYTAuditor by remember(player, context) {
             derivedStateOf {
                 object : HYTBinder.Companion.HYTAuditor {
@@ -125,7 +135,8 @@ class HYTApp : HYTBaseActivity() {
                 },
                 longClick = {
                     startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
-                }
+                },
+                paused = paused
             );
             val animating: Boolean = visible || opacity > 0.0f
             if (animating && LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -164,6 +175,20 @@ class HYTApp : HYTBaseActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        if (_paused != null) {
+            _paused!!(true);
+        }
+        super.onPause()
+    }
+
+    override fun onResume() {
+        if (_paused != null) {
+            _paused!!(false);
+        }
+        super.onResume()
     }
 
     @Composable
