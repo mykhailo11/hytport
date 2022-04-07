@@ -18,4 +18,8 @@
     <string name="hyt_service_destroy">org.hyt.hytport.DESTROY</string>
     <string name="hyt_channel">hyt_channel</string>
     <string name="spotify_client_id">9802d6e65fd944fe8fceae99e039ff25</string>
+    <string name="hyt_playback_permission">This app allows you to playback media from your device.Thus, it requires access to the local storage.</string>
+    <string name="hyt_capture_permission">Also, the app captures data from the output mixer that is used for visuals, so the corresponding permission is required. </string>
+    <string name="hyt_capture_permission_note">Note, that the application does not record any external noise or voices and does not collect or use any sensitive information.</string>
+    <string name="hyt_privacy_policy_accept">By using this app, you agree to the Privacy Policy</string>
 </resources>
