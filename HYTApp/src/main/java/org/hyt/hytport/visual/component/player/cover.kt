@@ -77,11 +77,11 @@ fun cover(
                 contentScale = ContentScale.Crop,
                 modifier = coverModifier
                     .border(
-                        width = 4.dp,
+                        width = 6.dp,
                         color = colorResource(R.color.hyt_dark),
                         shape = CircleShape
                     )
-                    .padding(3.dp)
+                    .padding(5.dp)
                     .clip(CircleShape)
             )
         }
