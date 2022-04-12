@@ -127,6 +127,7 @@ class HYTService : Service() {
                             )
                         ).build()
                     )
+                    .setSilent(true)
             }
         }
         _auditor = object : HYTBinder.Companion.HYTAuditor {
