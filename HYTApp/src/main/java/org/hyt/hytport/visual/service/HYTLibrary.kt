@@ -15,11 +15,12 @@ import org.hyt.hytport.audio.model.HYTBaseAudioModel
 import org.hyt.hytport.visual.component.library.library
 import org.hyt.hytport.visual.component.loading.loadingIcon
 import java.util.*
+import java.util.concurrent.ScheduledExecutorService
 
 class HYTLibrary : HYTBaseActivity() {
 
     @Composable
-    override fun compose(player: HYTBinder) {
+    override fun compose(player: HYTBinder, executor: ScheduledExecutorService) {
         val queue: List<HYTAudioModel>? by produceState(
             initialValue = null as List<HYTAudioModel>?,
             player
@@ -58,9 +59,7 @@ class HYTLibrary : HYTBaseActivity() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    brush = Brush.linearGradient(
-                        Pair(0.0f, colorResource(R.color.hyt_accent_dark)),
-                        Pair(0.1f, colorResource(R.color.hyt_dark)),
+                    brush = Brush.verticalGradient(
                         Pair(0.8f, colorResource(R.color.hyt_dark)),
                         Pair(1.0f, colorResource(R.color.hyt_accent_dark))
                     )
@@ -74,7 +73,8 @@ class HYTLibrary : HYTBaseActivity() {
                 },
                 back = {
                     finish();
-                }
+                },
+                executor = executor
             );
         }
     }
