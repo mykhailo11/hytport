@@ -8,24 +8,17 @@ import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
@@ -33,7 +26,6 @@ import org.hyt.hytport.graphics.factory.HYTGLFactory
 import org.hyt.hytport.util.HYTMathUtil
 import org.hyt.hytport.util.HYTUtil
 import org.hyt.hytport.visual.api.model.HYTState
-import org.hyt.hytport.visual.component.fonts
 import org.hyt.hytport.visual.component.loading.loadingIcon
 import org.hyt.hytport.visual.component.player.cover
 import org.hyt.hytport.visual.component.player.player
@@ -41,7 +33,6 @@ import org.hyt.hytport.visual.component.surface.pop
 import org.hyt.hytport.visual.component.surface.surface
 import org.hyt.hytport.visual.factory.HYTStateFactory
 import java.util.concurrent.ScheduledExecutorService
-import kotlin.properties.Delegates
 
 class HYTApp : HYTBaseActivity() {
 

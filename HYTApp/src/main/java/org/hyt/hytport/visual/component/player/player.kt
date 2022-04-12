@@ -1,6 +1,5 @@
 package org.hyt.hytport.visual.component.player
 
-import android.os.Binder
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

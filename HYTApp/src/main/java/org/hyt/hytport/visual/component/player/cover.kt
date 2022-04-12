@@ -1,6 +1,5 @@
 package org.hyt.hytport.visual.component.player
 
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.Image
@@ -15,10 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
