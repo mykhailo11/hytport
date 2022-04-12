@@ -1,9 +1,8 @@
 <vector android:height="200dp"
     android:viewportHeight="200" android:viewportWidth="200"
     android:width="200dp" xmlns:android="http://schemas.android.com/apk/res/android">
-    <path android:fillColor="@color/hyt_accent" android:pathData="M0.0 100.0 A100.0 100.0 0.0 0.0 1 200.0 100.0 A100.0 100.0 0.0 0.0 1 0.0 100.0"/>
-    <path android:fillColor="@color/hyt_dark" android:strokeWidth="3" android:pathData="M10.0 100.0 A90.0 90.0 0.0 0.0 1 190.0 100.0 A90.0 90.0 0.0 0.0 1 10.0 100.0"/>
-    <group android:scaleY="0.4" android:scaleX="0.4" android:pivotY="100.0" android:pivotX="100.0">
-    <path android:strokeColor="@color/hyt_grey" android:strokeWidth="10" android:strokeLineCap="butt" android:strokeLineJoin="bevel" android:pathData="M0.0 100.0 A100.0 100.0 0 0 1 200.0 100.0 A100.0 100.0 0 0 1 0.0 100.0"/>
+    <path android:fillColor="@color/hyt_accent" android:pathData="M0.0 100.0 A100.0 100.0 0.0 0.0 1 200.0 100.0 M190.0 100 A90.0 90.0 0 0 0 10.0 100.0 A90.0 90.0 0.0 0.0 0 190.0 100.0 M200.0 100.0 A100.0 100.0 0 0 1 0.0 100.0"/>
+    <group android:scaleY="0.5" android:scaleX="0.5" android:pivotY="100.0" android:pivotX="100.0">
+    <path android:fillColor="@color/hyt_accent" android:strokeWidth="10" android:strokeLineCap="butt" android:strokeLineJoin="bevel" android:pathData="M0.0 100.0 A100.0 100.0 0 0 1 200.0 100.0 A100.0 100.0 0 0 1 0.0 100.0"/>
     </group>
 </vector>
