@@ -1,9 +1,6 @@
 #version 300 es
 
 uniform vec2 surface;
-uniform float pulseStates[6];
-uniform float balanceStates[6];
-uniform float parameters;
 uniform float time;
 
 void main(){
