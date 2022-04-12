@@ -66,7 +66,7 @@ class HYTBaseAudioPlayer public constructor(
                 _auditor.progress(_player.duration, _player.currentPosition);
             }
         };
-        _executor.scheduleAtFixedRate(_progressWorker, 500, 500, TimeUnit.MICROSECONDS);
+        _executor.scheduleAtFixedRate(_progressWorker, 300, 300, TimeUnit.MILLISECONDS);
     }
 
     override fun play() {

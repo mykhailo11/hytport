@@ -13,6 +13,17 @@ out vec4 fragmentColor;
 float thick = 0.01;
 float smoothness = 0.8;
 
+mat2 getRotation(float angle) {
+    float sinAngle = sin(angle);
+    float cosAngle = cos(angle);
+
+    return mat2(
+    cosAngle, -sinAngle,
+    sinAngle, cosAngle
+    );
+}
+
+
 vec4 getPalette(float saturation){
     float red = 1.0 - smoothstep(0.25, 0.5, saturation) + smoothstep(0.5, 0.75, saturation);
     float green = smoothstep(0.0, 0.25, saturation) - smoothstep(0.5, 0.75, saturation);
@@ -36,12 +47,15 @@ vec2 getState(float xx, float s, float states[6]){
     return vec2(actual, average);
 }
 
+
+
 void main(){
     vec2 point = (gl_FragCoord.xy - 0.5 * surface.xy) * 2.0;
     point /=  surface.x < surface.y ? surface.x : surface.y;
-    vec2 computed = getState(((point.x + 1.0) * 0.5 * sin(time - point.x) + point.y * cos(time + point.x) + 2.0) / 4.0, smoothness, balanceStates);
+    vec2 wave = getRotation(time * 0.1) * point;
+    vec2 computed = getState(((wave.x + 1.0) * 0.5 * sin(time - wave.x) + point.y * cos(time + wave.x) + 2.0) / 4.0, smoothness, balanceStates);
     float average = computed.y;
-    computed = getState(((point.x - computed.x) * sin(-time + average * 5.0 + point.y * sin(time * 0.5)) + point.y * cos(-time + average + point.y + 0.5) * sin(time * 0.5) + 2.0) / 4.0, smoothness + 0.1 * computed.x, pulseStates) - computed * 0.8;
+    computed = getState(((wave.x - computed.x) * sin(-time + average * 5.0 + wave.y * sin(time * 0.5)) + wave.y * cos(-time + average + wave.y + 0.5) * sin(time * 0.5) + 2.0) / 4.0, smoothness + 0.1 * computed.x, pulseStates) - computed * 0.8;
     float cummulativeState = computed.x;
     vec2 fraction = vec2(mod(time + point.x + point.y, 16.0) / 16.0, mod(-time + 8.0 * computed.x * length(vec2(cummulativeState, point.x)), 40.0) / 40.0);
     vec4 color = getPalette(fraction.y);
