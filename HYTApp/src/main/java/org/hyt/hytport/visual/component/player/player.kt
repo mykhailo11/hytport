@@ -1,6 +1,6 @@
 package org.hyt.hytport.visual.component.player
 
-import androidx.compose.foundation.background
+import android.os.Binder
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,11 +17,13 @@ import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.visual.component.control.control
+import org.hyt.hytport.visual.component.fonts
 
 @Composable
 fun player(
     player: HYTBinder,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    longClick: () -> Unit = {}
 ) {
     var slider: Float by remember { mutableStateOf(0.0f) };
     var sliding: Boolean by remember { mutableStateOf(false) };
@@ -78,18 +80,15 @@ fun player(
     Column(
         verticalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = colorResource(R.color.hyt_dark)
-            )
-            .padding(50.dp)
+            .fillMaxHeight()
             .then(modifier)
     ) {
         Column {
             Text(
                 text = title,
+                fontFamily = fonts,
                 color = colorResource(R.color.hyt_white),
-                fontSize = 28.sp,
+                fontSize = 25.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier
@@ -100,8 +99,8 @@ fun player(
             );
             Text(
                 text = artist,
+                fontFamily = fonts,
                 color = colorResource(R.color.hyt_text_dark),
-                fontSize = 16.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,13 +123,16 @@ fun player(
                 player.seek((slider * 1000.0f).toInt())
             },
             colors = SliderDefaults.colors(
-                thumbColor = colorResource(R.color.hyt_accent),
+                thumbColor = colorResource(R.color.hyt_grey),
                 activeTrackColor = colorResource(R.color.hyt_grey)
             ),
             valueRange = 0.0f..sliderMax
         );
         control(
-            player = player
+            player = player,
+            longClick = longClick,
+            modifier = Modifier
+                .height(80.dp)
         );
     }
 }
