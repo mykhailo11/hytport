@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vertex_shader">HYTCanvas.glsl</string>
+    <string name="fragment_shader">HYTView.glsl</string>
+    <string name="init_shader">HYTInit.glsl</string>
+    <string name="init_vertex_shader">HYTInitCanvas.glsl</string>
+    <string name="pulse_states">pulseStates</string>
+    <string name="balance_states">balanceStates</string>
+    <string name="parameters">parameters</string>
+    <string name="absorb_states">absorbStates</string>
+    <string name="mean_state">meanState</string>
+</resources>
