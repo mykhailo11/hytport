@@ -3,45 +3,87 @@ package org.hyt.hytport.visual.service
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.opengl.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.hyt.hytport.R
+import org.hyt.hytport.graphics.factory.HYTGLFactory
+import org.hyt.hytport.util.HYTUtil
+import org.hyt.hytport.visual.component.custom.primaryButton
+import org.hyt.hytport.visual.component.fonts
+import org.hyt.hytport.visual.component.surface.pop
+import org.hyt.hytport.visual.component.surface.surface
 
 class HYTInit : ComponentActivity() {
 
+    private lateinit var _canvas: GLSurfaceView.Renderer;
+
+    private var _paused: ((Boolean) -> Unit)? = null;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        _canvas = HYTGLFactory.getCanvas(
+            this,
+            HYTUtil.readSource(resources.getString(R.string.init_vertex_shader), assets),
+            HYTUtil.readSource(resources.getString(R.string.init_shader), assets),
+            emptyMap()
+        )
         setContent {
-            var playbackGranted: Boolean by remember { mutableStateOf(false) };
-            var processingGranted: Boolean by remember { mutableStateOf(false) };
+            var playbackGranted: Boolean by remember {
+                mutableStateOf(
+                    checkSelfPermission(
+                        Manifest.permission.MODIFY_AUDIO_SETTINGS
+                    ) == PackageManager.PERMISSION_GRANTED
+                            && checkSelfPermission(
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                    ) == PackageManager.PERMISSION_GRANTED
+                            && (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || checkSelfPermission(
+                        Manifest.permission.FOREGROUND_SERVICE
+                    ) == PackageManager.PERMISSION_GRANTED)
+                            && checkSelfPermission(
+                        Manifest.permission.INTERNET
+                    ) == PackageManager.PERMISSION_GRANTED
+                            && checkSelfPermission(
+                        Manifest.permission.WAKE_LOCK
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
+            };
+            var processingGranted: Boolean by remember {
+                mutableStateOf(
+                    checkSelfPermission(
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                )
+            };
             var policyAccepted: Boolean by remember { mutableStateOf(false) };
             val uriHandler: UriHandler = LocalUriHandler.current;
             val permissionLauncher = rememberLauncherForActivityResult(
@@ -65,26 +107,25 @@ class HYTInit : ComponentActivity() {
                 processingGranted = processingGranted
                         || recordAudio != null && recordAudio;
             }
-            if (!playbackGranted) {
-                _permission(
-                    title = "PLAYBACK PERMISSION",
-                    content = buildAnnotatedString { append(stringResource(R.string.hyt_playback_permission)) },
-                ) {
-                    permissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.MODIFY_AUDIO_SETTINGS,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.FOREGROUND_SERVICE,
-                            Manifest.permission.INTERNET,
-                            Manifest.permission.WAKE_LOCK
-                        )
-                    );
-                };
-            } else if (!processingGranted) {
-                val captureContent: AnnotatedString = buildAnnotatedString {
-                    val normalPart: String = stringResource(R.string.hyt_capture_permission) + " ";
+            val title: String by derivedStateOf {
+                if (!playbackGranted) {
+                    "PLAYBACK PERMISSION"
+                } else if (!processingGranted) {
+                    "CAPTURE PERMISSION"
+                } else if (!policyAccepted) {
+                    "PRIVACY POLICY"
+                } else {
+                    ""
+                }
+            };
+            val content: AnnotatedString = buildAnnotatedString {
+                if (!playbackGranted) {
+                    append(stringResource(R.string.hyt_playback_permission))
+                } else if (!processingGranted) {
+                    val normalPart: String = stringResource(R.string.hyt_capture_permission);
                     val origin: String = stringResource(R.string.hyt_capture_permission_note);
                     append(normalPart);
+                    append(" ")
                     append(origin);
                     addStyle(
                         style = SpanStyle(
@@ -94,20 +135,8 @@ class HYTInit : ComponentActivity() {
                         start = normalPart.length,
                         end = origin.length + normalPart.length
                     );
-                }
-                _permission(
-                    title = "CAPTURE PERMISSION",
-                    content = captureContent
-                ) {
-                    permissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.RECORD_AUDIO
-                        )
-                    );
-                };
-            } else if (!policyAccepted) {
-                val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
-                val privacyContent: AnnotatedString = buildAnnotatedString {
+                } else if (!policyAccepted) {
+                    val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
                     val part: String = "Privacy Policy";
                     val start: Int = origin.indexOf(part);
                     val end: Int = start + part.length
@@ -126,20 +155,54 @@ class HYTInit : ComponentActivity() {
                         start = start,
                         end = end
                     );
+                } else {
+                    append("")
                 }
-                _permission(
-                    title = "PRIVACY POLICY",
-                    content = privacyContent,
-                    contentClick = {
-                        privacyContent.getStringAnnotations("URL", 0, origin.length)
+            }
+            val launcher: () -> Unit by derivedStateOf {
+                if (!playbackGranted) {
+                    {
+                        permissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.MODIFY_AUDIO_SETTINGS,
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.FOREGROUND_SERVICE,
+                                Manifest.permission.INTERNET,
+                                Manifest.permission.WAKE_LOCK
+                            )
+                        );
+                    }
+                } else if (!processingGranted) {
+                    {
+                        permissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.RECORD_AUDIO
+                            )
+                        );
+                    }
+                } else if (!policyAccepted) {
+                    {
+                        policyAccepted = true;
+                    }
+                } else {
+                    {}
+                }
+            }
+            val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
+            val contentClick: () -> Unit by derivedStateOf {
+                if (!policyAccepted) {
+                    {
+                        content.getStringAnnotations("URL", 0, origin.length)
                             .firstOrNull()?.let { range: AnnotatedString.Range<String> ->
                                 uriHandler.openUri(range.item);
                             }
                     }
-                ) {
-                    policyAccepted = true;
+                } else {
+                    {}
                 }
-            } else {
+            };
+
+            if (playbackGranted && processingGranted && policyAccepted) {
                 getSharedPreferences(
                     resources.getString(R.string.preferences),
                     Context.MODE_PRIVATE
@@ -152,6 +215,14 @@ class HYTInit : ComponentActivity() {
                     .commit();
                 startActivityIfNeeded(Intent(this, HYTApp::class.java), 100);
                 finish();
+            } else {
+                _permission(
+                    title = title,
+                    content = content,
+                    contentClick = contentClick
+                ) {
+                    launcher();
+                }
             }
         }
     }
@@ -160,65 +231,50 @@ class HYTInit : ComponentActivity() {
     private fun _permission(
         title: String,
         content: AnnotatedString,
+        confirm: String = "Accept",
         contentClick: (() -> Unit)? = null,
+        modifier: Modifier = Modifier,
         accept: () -> Unit
     ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.CenterHorizontally,
+        val context: Context = LocalContext.current;
+        val paused: Boolean by produceState(
+            initialValue = false,
+            context
+        ) {
+            _paused = { pause: Boolean ->
+                value = pause;
+            }
+        };
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        Pair(0.0f, colorResource(R.color.hyt_accent_dark)),
-                        Pair(0.2f, colorResource(R.color.hyt_dark))
-                    )
-                )
-                .padding(
-                    horizontal = 50.dp,
-                    vertical = 100.dp
-                )
         ) {
-            Text(
-                textAlign = TextAlign.Center,
-                text = title,
-                color = colorResource(R.color.hyt_accent),
-                fontSize = 35.sp
+            surface(
+                renderer = _canvas,
+                paused = paused
             );
-            Text(
-                textAlign = TextAlign.Center,
-                text = content,
-                color = colorResource(R.color.hyt_text_dark),
-                lineHeight = 35.sp,
-                fontSize = 18.sp,
-                modifier = Modifier
-                    .clickable {
-                        if (contentClick != null) {
-                            contentClick();
-                        }
-                    }
+            pop(
+                title = title,
+                content = content,
+                contentClick = contentClick,
+                confirm = confirm,
+                accept = accept
             );
-            Button(
-                onClick = {
-                    accept()
-                },
-                contentPadding = PaddingValues(
-                    horizontal = 40.dp,
-                    vertical = 20.dp
-                ),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = colorResource(R.color.hyt_accent)
-                ),
-                modifier = Modifier
-                    .clip(RoundedCornerShape(15))
-            ) {
-                Text(
-                    text = "Accept",
-                    fontSize = 18.sp,
-                    color = colorResource(R.color.hyt_black)
-                );
-            }
         }
+    }
+
+    override fun onPause() {
+        if (_paused != null) {
+            _paused!!(true);
+        }
+        super.onPause()
+    }
+
+    override fun onResume() {
+        if (_paused != null) {
+            _paused!!(false);
+        }
+        super.onResume()
     }
 
 }
