@@ -72,7 +72,7 @@ class HYTRemoteAudioRepository public constructor(
                             setAlbum(jsonAudio.optString("album"));
                             setDuration(jsonAudio.optLong("duration"));
                             setAlbumPath(Uri.parse(jsonAudio.optString("albumPath")));
-                            setPath(Uri.parse("${_context.getString(R.string.remote_service_base)}/${id}"));
+                            setPath(Uri.parse("/${id}"));
                         }
                     );
                 }

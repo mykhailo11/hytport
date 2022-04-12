@@ -3,11 +3,12 @@ package org.hyt.hytport.audio.service
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.os.Handler
-import android.os.Looper
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class HYTBaseAudioPlayer public constructor(
     queueProvider: ((Deque<HYTAudioModel>) -> Unit) -> Unit,
@@ -36,9 +37,9 @@ class HYTBaseAudioPlayer public constructor(
 
     private var _prepared: Boolean = false;
 
-    private val _progressDelegator: Handler;
+    private val _progressWorker: () -> Unit;
 
-    private val _progressWorker: Runnable;
+    private val _executor: ScheduledExecutorService;
 
     init {
         _context = context;
@@ -50,24 +51,22 @@ class HYTBaseAudioPlayer public constructor(
                 _auditor.onComplete(queue.first);
             }
         };
+        _player.setOnErrorListener { _, _, _ ->
+            true;
+        }
         _player.setOnPreparedListener {
             _prepared = true;
             if (!_player.isPlaying) {
                 _player.start();
             }
         };
-        _progressDelegator = Handler(Looper.getMainLooper());
-        _progressWorker = object : Runnable {
-
-            override fun run() {
-                if (_prepared && _player.isPlaying){
-                    _auditor.progress(_player.duration, _player.currentPosition);
-                }
-                _progressDelegator.postDelayed(this, 500);
+        _executor = Executors.newSingleThreadScheduledExecutor();
+        _progressWorker = {
+            if (_prepared && _player.isPlaying) {
+                _auditor.progress(_player.duration, _player.currentPosition);
             }
-
         };
-        _progressDelegator.postDelayed(_progressWorker, 500);
+        _executor.scheduleAtFixedRate(_progressWorker, 500, 500, TimeUnit.MICROSECONDS);
     }
 
     override fun play() {
@@ -141,7 +140,7 @@ class HYTBaseAudioPlayer public constructor(
         }
     }
 
-    private fun _reset(audio: HYTAudioModel): Unit {
+    @Synchronized private  fun _reset(audio: HYTAudioModel): Unit {
         _prepared = false;
         _player.reset();
         _player.setDataSource(
@@ -160,8 +159,8 @@ class HYTBaseAudioPlayer public constructor(
 
     override fun destroy() {
         _auditor.onDestroy();
+        _executor.shutdown();
         resetAuditor();
-        _progressDelegator.removeCallbacks(_progressWorker);
         if (_player.isPlaying) {
             _player.stop();
         }

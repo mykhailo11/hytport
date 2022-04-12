@@ -21,7 +21,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             MediaStore.Audio.Media.ALBUM,
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
-            MediaStore.Audio.Media.DATA
+            MediaStore.Audio.Media.DATA,
+            MediaStore.Audio.Media.IS_MUSIC
         );
 
         private val _QUERY__ID: String = "_id = ?";
@@ -29,6 +30,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         private val _QUERY_ARTIST: String = "artist = ?";
 
         private val _QUERY_ALBUM: String = "album = ?";
+
+        private val _QUERY_IS_MUSIC: String = "is_music != 0";
 
     }
 
@@ -40,7 +43,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
 
     override fun getAllAudio(ready: (List<HYTAudioModel>) -> Unit): Unit {
         ready(_getAudio(
-            null,
+            _QUERY_IS_MUSIC,
             null,
             _getStorage()
         ));
