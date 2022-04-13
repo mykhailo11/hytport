@@ -53,7 +53,7 @@ void main(){
     vec2 point = (gl_FragCoord.xy - 0.5 * surface.xy) * 2.0;
     point /=  surface.x < surface.y ? surface.x : surface.y;
     vec2 wave = getRotation(time * 0.1) * point;
-    vec2 computed = getState(((wave.x + 1.0) * 0.5 * sin(time - wave.x) + point.y * cos(time + wave.x) + 2.0) / 4.0, smoothness, balanceStates);
+    vec2 computed = getState(((wave.x + 1.0) * 0.5 * sin(time - wave.x) + wave.y * cos(time + wave.x) + 2.0) / 4.0, smoothness, balanceStates);
     float average = computed.y;
     computed = getState(((wave.x - computed.x) * sin(-time + average * 5.0 + wave.y * sin(time * 0.5)) + wave.y * cos(-time + average + wave.y + 0.5) * sin(time * 0.5) + 2.0) / 4.0, smoothness + 0.1 * computed.x, pulseStates) - computed * 0.8;
     float cummulativeState = computed.x;
