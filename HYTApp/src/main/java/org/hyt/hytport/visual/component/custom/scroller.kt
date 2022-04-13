@@ -26,9 +26,11 @@ import kotlin.math.roundToInt
 @Composable
 fun scroller(
     executor: ScheduledExecutorService,
+    threshold: Float,
     stateController: ((Float) -> Unit) -> Unit,
     scrollConsumer: (Float) -> Unit
 ) {
+    val deltaTreshold by remember(threshold) { derivedStateOf { threshold * 5.0f } };
     var scrollerHeight: Int by remember { mutableStateOf(0) };
     var barHeight: Int by remember { mutableStateOf(0) };
     val finish: Int by remember(scrollerHeight, barHeight) {
@@ -59,7 +61,7 @@ fun scroller(
         if (offset + pixels in 0..finish) {
             offset += pixels;
             if (!fastScroll) {
-                fastScroll = (delta / scrollerHeight).absoluteValue > 0.2f;
+                fastScroll = (delta / scrollerHeight).absoluteValue > deltaTreshold;
             }
             if (!fastScroll) {
                 scrollConsumer(offset.toFloat() / finish.toFloat());

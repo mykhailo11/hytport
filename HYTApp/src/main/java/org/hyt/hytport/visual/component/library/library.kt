@@ -52,7 +52,7 @@ fun library(
             {
                 if (libraryItems != null && filter.isNotBlank() && filter.matches("[A-Za-z0-9]*".toRegex())) {
                     filtered = libraryItems.filter { audio: HYTAudioModel ->
-                        matches(audio, HYTUtil.anyMatch(filter).toRegex());
+                        matches(audio, HYTUtil.anyMatch(filter.trim()).toRegex());
                     }
                 } else if (libraryItems != null) {
                     filtered = libraryItems;
@@ -64,6 +64,17 @@ fun library(
         }
     }
     val columnState = rememberLazyListState();
+    val threshold: Float by remember(columnState) {
+        derivedStateOf {
+            columnState
+                .layoutInfo
+                .visibleItemsInfo
+                .count()
+                .toFloat() / columnState
+                .layoutInfo
+                .totalItemsCount;
+        }
+    }
     var scrollStateConsumer: ((Float) -> Unit)? by remember { mutableStateOf(null) };
     val scrollState = rememberScrollableState { delta: Float ->
         if (scrollStateConsumer != null) {
@@ -174,6 +185,7 @@ fun library(
                 }
                 scroller(
                     executor = executor,
+                    threshold = threshold,
                     stateController = { scrollConsumer: (Float) -> Unit ->
                         scrollStateConsumer = scrollConsumer;
                     },
