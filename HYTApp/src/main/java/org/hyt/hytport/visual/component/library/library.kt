@@ -173,6 +173,7 @@ fun library(
                     }
                 }
                 scroller(
+                    executor = executor,
                     stateController = { scrollConsumer: (Float) -> Unit ->
                         scrollStateConsumer = scrollConsumer;
                     },
