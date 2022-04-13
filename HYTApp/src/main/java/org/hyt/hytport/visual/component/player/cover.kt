@@ -1,6 +1,5 @@
 package org.hyt.hytport.visual.component.player
 
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.Image
@@ -15,10 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -35,21 +32,8 @@ fun cover(
         modifier = modifier
             .then(modifier)
     ) {
-        Image(
-            painter = painterResource(
-                if (LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE)
-                    R.drawable.hyt_cover_wrapper_landscape_200dp
-                else
-                    R.drawable.hyt_cover_wrapper_200dp
-            ),
-            contentDescription = null,
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier
-                .aspectRatio(1.0f)
-        );
         val coverModifier: Modifier = Modifier
             .aspectRatio(1.0f)
-            .scale(0.8f)
         if (album != null) {
             Image(
                 bitmap = album.asImageBitmap(),
@@ -57,11 +41,11 @@ fun cover(
                 contentDescription = null,
                 modifier = coverModifier
                     .border(
-                        width = 4.dp,
-                        color = colorResource(R.color.hyt_dark),
+                        width = 3.dp,
+                        color = colorResource(R.color.hyt_grey),
                         shape = RoundedCornerShape(coverAnimation)
                     )
-                    .padding(3.dp)
+                    .padding(2.dp)
                     .clip(RoundedCornerShape(coverAnimation))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -77,11 +61,11 @@ fun cover(
                 contentScale = ContentScale.Crop,
                 modifier = coverModifier
                     .border(
-                        width = 6.dp,
-                        color = colorResource(R.color.hyt_dark),
+                        width = 3.dp,
+                        color = colorResource(R.color.hyt_grey),
                         shape = CircleShape
                     )
-                    .padding(5.dp)
+                    .padding(2.dp)
                     .clip(CircleShape)
             )
         }

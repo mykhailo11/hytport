@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <color name="hyt_primary">#232722</color>
     <color name="hyt_primary_variant">#0B0E0A</color>
     <color name="hyt_secondary">#000000</color>
     <color name="hyt_secondary_variant">#1E002E</color>
+
     <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
-    <!--color name="hyt_accent">#2D1257</color-->
-    <color name="hyt_accent">#F4D18A</color>
-    <!--color name="hyt_accent_light">#4D270C55</color-->
-    <color name="hyt_accent_light">#33F2C0D7</color>
-    <!--color name="hyt_text_dark">#7C6D93</color-->
-    <color name="hyt_text_dark">#9E9E9E</color>
-    <!--color name="hyt_grey">#CAB69E</color-->
-    <color name="hyt_grey">#3F5B6D</color>
-    <!--color name="hyt_accent_dark">#28052B</color-->
-    <color name="hyt_accent_dark">#033E40</color>
-    <!--color name="hyt_dark">#09090E</color-->
-    <color name="hyt_dark">#0C0C12</color>
+
+    <color name="hyt_accent">#F6FFA4</color>
+
+    <color name="hyt_player_back">#80000000</color>
+    <color name="hyt_instructor_back">#E6000000</color>
+
+    <color name="hyt_text_dark">#CCCCCC</color>
+
+    <color name="hyt_grey">#82C6B3</color>
+    <color name="hyt_accent_dark">#005A5A</color>
+    <color name="hyt_dark">#000D13</color>
     <color name="hyt_white">#FFFFFF</color>
     <color name="hyt_black">#000000</color>
     <color name="hyt_press">#2BFFA4</color>

@@ -7,7 +7,6 @@ import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonArrayRequest
 import com.android.volley.toolbox.Volley
-import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.access.HYTAudioRepository
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.factory.HYTAudioFactory
@@ -72,7 +71,7 @@ class HYTRemoteAudioRepository public constructor(
                             setAlbum(jsonAudio.optString("album"));
                             setDuration(jsonAudio.optLong("duration"));
                             setAlbumPath(Uri.parse(jsonAudio.optString("albumPath")));
-                            setPath(Uri.parse("${_context.getString(R.string.remote_service_base)}/${id}"));
+                            setPath(Uri.parse("/${id}"));
                         }
                     );
                 }

@@ -3,10 +3,10 @@ package org.hyt.hytport.visual.component.control
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
@@ -20,7 +20,8 @@ import org.hyt.hytport.visual.component.util.pressed
 @Composable
 fun control(
     player: HYTBinder,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    longClick: () -> Unit
 ) {
     var playing: Boolean by remember(player) { mutableStateOf(false) };
     val auditor: HYTBinder.Companion.HYTAuditor by remember(player) {
@@ -63,6 +64,8 @@ fun control(
         }
     }
     Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
             .then(modifier)
     ) {
@@ -75,12 +78,11 @@ fun control(
                 else
                     R.drawable.hyt_next_200dp
             ),
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .rotate(180f)
                 .weight(1.0f)
-                .aspectRatio(1.0f)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = pressed(
@@ -102,20 +104,23 @@ fun control(
                 else
                     R.drawable.hyt_pause_200dp
             ),
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .weight(1.0f)
-                .aspectRatio(1.0f)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    if (playing) {
-                        player.pause();
-                    } else {
-                        player.play();
-                    }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onLongPress = {
+                            longClick()
+                        },
+                        onTap = {
+                            if (playing) {
+                                player.pause();
+                            } else {
+                                player.play();
+                            }
+                        }
+                    )
                 }
         );
         Image(
@@ -125,11 +130,10 @@ fun control(
                 else
                     R.drawable.hyt_next_200dp
             ),
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .weight(1.0f)
-                .aspectRatio(1.0f)
                 .clickable {
                     player.next()
                 }
