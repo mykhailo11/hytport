@@ -150,8 +150,8 @@ class HYTService : Service() {
                 _setNotification(audio);
             }
 
-            override fun progress(duration: Int, current: Int) {
-
+            override fun onComplete(audio: HYTAudioModel) {
+                _player.next();
             }
 
             private fun _setMetadata(audio: HYTAudioModel): Unit {
@@ -166,6 +166,7 @@ class HYTService : Service() {
                                 MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
                                 HYTUtil.getBitmap(audio.getAlbumPath(), contentResolver)
                             )
+                            .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, -1L)
                             .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, audio.getAlbumPath()?.path)
                         mediaSession.setMetadata(
                                 _metadataBuilder!!.build()
@@ -175,11 +176,6 @@ class HYTService : Service() {
 
 
 
-            }
-
-            override fun onSetPlayer(player: HYTAudioPlayer) {
-                _player.destroy();
-                _player = player;
             }
 
             private fun _setNotification(audio: HYTAudioModel): Unit {
