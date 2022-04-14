@@ -48,9 +48,7 @@ class HYTAudioUtil {
                             PlaybackStateCompat.ACTION_PAUSE or
                             PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
                             PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                            //PlaybackStateCompat.ACTION_SEEK_TO
                 )
-                .setState(PlaybackStateCompat.STATE_NONE, 0L, 1.0f);
             mediaSession.setCallback(
                 object : MediaSessionCompat.Callback() {
 
@@ -77,10 +75,6 @@ class HYTAudioUtil {
 
                     override fun onSkipToPrevious() {
                         player.previous();
-                    }
-
-                    override fun onSeekTo(pos: Long) {
-                        player.seek(pos.toInt());
                     }
 
                     override fun onStop() {
