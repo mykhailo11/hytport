@@ -22,7 +22,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.IS_MUSIC
+            MediaStore.Audio.Media.IS_MUSIC,
+            MediaStore.Audio.Media.DATE_ADDED
         );
 
         private val _QUERY__ID: String = "_id = ?";
@@ -32,6 +33,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         private val _QUERY_ALBUM: String = "album = ?";
 
         private val _QUERY_IS_MUSIC: String = "is_music != 0";
+
+        private val _ORDER_BY_DATE: String = "date_added DESC";
 
     }
 
@@ -76,7 +79,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             _PROJECTION,
             query,
             parameters,
-            null
+            _ORDER_BY_DATE
         );
         val items: MutableList<HYTAudioModel> = ArrayList();
         if (cursor != null && cursor.moveToFirst()) {
