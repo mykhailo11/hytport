@@ -109,10 +109,6 @@ class HYTApp : HYTBaseActivity() {
                         _consumer(food);
                     }
 
-                    override fun onComplete(audio: HYTAudioModel) {
-                        player.next();
-                    }
-
                     override fun onReady(audio: HYTAudioModel) {
                         cover = HYTUtil.getBitmap(audio.getAlbumPath(), context.contentResolver);
                     }
@@ -195,7 +191,6 @@ class HYTApp : HYTBaseActivity() {
                 && configuration.orientation == Configuration.ORIENTATION_PORTRAIT
                 && configuration.screenHeightDp > 500
             ) {
-                val process = rememberCoroutineScope();
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,

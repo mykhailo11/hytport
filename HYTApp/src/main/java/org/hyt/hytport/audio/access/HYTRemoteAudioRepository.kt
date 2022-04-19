@@ -40,7 +40,7 @@ class HYTRemoteAudioRepository public constructor(
         _requestQueue = Volley.newRequestQueue(_context);
     }
 
-    override fun getAllAudio(ready: (List<HYTAudioModel>) -> Unit): Unit {
+    override fun getAllAudio(ready: (MutableList<HYTAudioModel>) -> Unit): Unit {
         _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_ALL]}", ready);
     }
 
@@ -52,7 +52,7 @@ class HYTRemoteAudioRepository public constructor(
 
     private fun _getAudio(
         path: String,
-        ready: (List<HYTAudioModel>) -> Unit
+        ready: (MutableList<HYTAudioModel>) -> Unit
     ): Unit{
         val request: JsonArrayRequest = JsonArrayRequest(
             Request.Method.GET,

@@ -1,80 +1,76 @@
 package org.hyt.hytport.visual.component.library
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import org.hyt.hytport.util.HYTUtil
-import org.hyt.hytport.visual.component.custom.scroller
-import org.hyt.hytport.visual.component.fonts
+import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.visual.component.custom.recycler
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import kotlin.math.roundToInt
+
 
 @Composable
 fun library(
-    libraryItems: List<HYTAudioModel>?,
-    current: Long,
+    player: HYTBinder,
     click: (HYTAudioModel) -> Unit,
     back: () -> Unit,
     executor: ScheduledExecutorService
 ) {
-    var filter: String by remember { mutableStateOf("") };
-    var filtered: List<HYTAudioModel> by remember { mutableStateOf(emptyList()) };
-    DisposableEffect(
-        filter,
-        libraryItems
+    var currentManager: HYTAudioManager? by remember { mutableStateOf(null) };
+    val queue: MutableList<HYTAudioModel>? by produceState(
+        initialValue = null as MutableList<HYTAudioModel>?,
+        currentManager
     ) {
-        val scheduled: ScheduledFuture<*> = executor.schedule(
-            {
-                if (libraryItems != null && filter.isNotBlank() && filter.matches("[A-Za-z0-9]*".toRegex())) {
-                    filtered = libraryItems.filter { audio: HYTAudioModel ->
-                        matches(audio, HYTUtil.anyMatch(filter).toRegex());
+        currentManager?.queue { items: MutableList<HYTAudioModel> ->
+            value = items;
+        }
+    };
+    var filter: (HYTAudioModel) -> Boolean by remember { mutableStateOf({ true }) };
+    var current: Long by remember { mutableStateOf(-1L); };
+    val auditor: HYTBinder.Companion.HYTAuditor by remember(player) {
+        derivedStateOf {
+            object : HYTBinder.Companion.HYTAuditor {
+
+                override fun onReady(audio: HYTAudioModel) {
+                    player.manger { actualManager: HYTAudioManager ->
+                        currentManager = actualManager;
+                        currentManager?.current { currentAudio: HYTAudioModel ->
+                            current = currentAudio.getId();
+                        }
                     }
-                } else if (libraryItems != null) {
-                    filtered = libraryItems;
                 }
-            }, 500, TimeUnit.MILLISECONDS
-        );
+
+                override fun onNext(audio: HYTAudioModel) {
+                    current = audio.getId();
+                }
+
+                override fun onPrevious(audio: HYTAudioModel) {
+                    current = audio.getId();
+                }
+
+                override fun onSetManager(manager: HYTAudioManager) {
+                    currentManager = manager;
+                    manager.current { audio: HYTAudioModel ->
+                        current = audio.getId();
+                    }
+                }
+            }
+        }
+    };
+    DisposableEffect(player) {
+        player.addAuditor(auditor);
         onDispose {
-            scheduled.cancel(true);
+            player.removeAuditor(auditor);
         }
     }
-    val columnState = rememberLazyListState();
-    var scrollStateConsumer: ((Float) -> Unit)? by remember { mutableStateOf(null) };
-    val scrollState = rememberScrollableState { delta: Float ->
-        if (scrollStateConsumer != null) {
-            scrollStateConsumer!!(
-                columnState.firstVisibleItemIndex
-                        / columnState.layoutInfo.totalItemsCount.toFloat()
-            );
-        }
-        delta
-    }
-    val scrollProcess = rememberCoroutineScope();
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -104,39 +100,19 @@ fun library(
                         bottom = 0.dp
                     )
             )
-            Text(
-                text = remember { "Search" },
-                fontFamily = fonts,
-                color = colorResource(R.color.hyt_black),
-                modifier = Modifier
-                    .background(
-                        color = colorResource(R.color.hyt_accent),
-                        shape = RoundedCornerShape(30, 0, 0, 30)
-                    )
-                    .padding(15.dp)
-            );
-            BasicTextField(
-                value = filter,
-                onValueChange = { new: String ->
-                    filter = new;
+            search(
+                executor = executor,
+                search = { regex: Regex ->
+                    filter = { audio: HYTAudioModel ->
+                        matches(audio, regex);
+                    }
                 },
-                textStyle = TextStyle(
-                    color = colorResource(R.color.hyt_text_dark),
-                    fontFamily = fonts,
-                ),
-                cursorBrush = SolidColor(colorResource(R.color.hyt_text_dark)),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        width = 2.dp,
-                        color = colorResource(R.color.hyt_accent),
-                        shape = RoundedCornerShape(0, 30, 30, 0)
-                    )
-                    .padding(15.dp)
-            );
+                reset = {
+                    filter = { true };
+                }
+            )
         }
-        if (filtered.isNotEmpty()) {
+        if (queue != null && queue!!.isNotEmpty()) {
             Row(
                 modifier = Modifier
                     .weight(1.0f)
@@ -147,44 +123,24 @@ fun library(
                         bottom = 10.dp
                     )
             ) {
-                LazyColumn(
-                    state = columnState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1.0f)
-                        .scrollable(
-                            state = scrollState,
-                            orientation = Orientation.Vertical
-                        )
-                ) {
-                    items(
-                        items = filtered,
-                        key = { item: HYTAudioModel ->
-                            item.getId()
-                        }
-                    ) { audio: HYTAudioModel ->
-                        item(
-                            item = audio,
-                            empty = painterResource(R.drawable.hyt_empty_cover_200dp),
-                            current = audio.getId() == current,
-                            click = click,
-                            executor = executor
-                        );
-                    }
-                }
-                scroller(
+                recycler(
                     executor = executor,
-                    stateController = { scrollConsumer: (Float) -> Unit ->
-                        scrollStateConsumer = scrollConsumer;
-                    },
-                    scrollConsumer = { scroll: Float ->
-                        scrollProcess.launch {
-                            columnState.scrollToItem(
-                                (columnState.layoutInfo.totalItemsCount * scroll).roundToInt()
-                            );
-                        }
-                    }
-                );
+                    items = queue!!,
+                    filter = filter,
+                    modifier = Modifier
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 0.dp
+                        )
+                ) @Composable { audio: HYTAudioModel ->
+                    item(
+                        executor = executor,
+                        empty = painterResource(R.drawable.hyt_empty_cover_200dp),
+                        item = audio,
+                        current = current == audio.getId(),
+                        click = click
+                    )
+                }
             }
         }
     }

@@ -22,7 +22,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             MediaStore.Audio.Media.ALBUM_ID,
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.DATA,
-            MediaStore.Audio.Media.IS_MUSIC
+            MediaStore.Audio.Media.IS_MUSIC,
+            MediaStore.Audio.Media.DATE_ADDED
         );
 
         private val _QUERY__ID: String = "_id = ?";
@@ -33,6 +34,8 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
 
         private val _QUERY_IS_MUSIC: String = "is_music != 0";
 
+        private val _ORDER_BY_DATE: String = "date_added DESC";
+
     }
 
     private val _resolver: ContentResolver;
@@ -41,9 +44,9 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         _resolver = resolver;
     }
 
-    override fun getAllAudio(ready: (List<HYTAudioModel>) -> Unit): Unit {
+    override fun getAllAudio(ready: (MutableList<HYTAudioModel>) -> Unit): Unit {
         ready(_getAudio(
-            _QUERY_IS_MUSIC,
+            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._QUERY_IS_MUSIC,
             null,
             _getStorage()
         ));
@@ -52,7 +55,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
     override fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit {
         val parameters: Array<String> = arrayOf(id.toString());
         ready(_getAudio(
-            _QUERY__ID,
+            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._QUERY__ID,
             parameters,
             _getStorage()
         ).first());
@@ -70,13 +73,13 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         query: String?,
         parameters: Array<String>?,
         storage: Uri
-    ): List<HYTAudioModel> {
+    ): MutableList<HYTAudioModel> {
         val cursor: Cursor? = _resolver.query(
             storage,
-            _PROJECTION,
+            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._PROJECTION,
             query,
             parameters,
-            null
+            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._ORDER_BY_DATE
         );
         val items: MutableList<HYTAudioModel> = ArrayList();
         if (cursor != null && cursor.moveToFirst()) {
@@ -87,6 +90,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
             val albumIdColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
             val durationColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             val dataColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DATA);
+            val dateColumn: Int = cursor.getColumnIndex(MediaStore.Audio.Media.DATE_ADDED);
             do {
                 val id: Long = cursor.getLong(idColumn);
                 val audio: HYTAudioModel = HYTAudioFactory.getAudioModel();
@@ -94,6 +98,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
                 audio.setTitle(cursor.getString(titleColumn));
                 audio.setArtist(cursor.getString(artistColumn));
                 audio.setAlbum(cursor.getString(albumColumn));
+                audio.setOrder(cursor.getInt(dateColumn));
                 val albumCursor: Cursor? = _resolver.query(
                     storage,
                     arrayOf(MediaStore.Audio.Albums._ID),

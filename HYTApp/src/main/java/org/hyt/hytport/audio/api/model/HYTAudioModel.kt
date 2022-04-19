@@ -28,6 +28,10 @@ interface HYTAudioModel {
 
     fun setDuration(duration: Long?): Unit;
 
+    fun setOrder(order: Int): Unit;
+
+    fun getOrder(): Int;
+
     fun getPath(): Uri?;
 
     fun setPath(path: Uri?): Unit;
