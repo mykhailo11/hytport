@@ -24,21 +24,21 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.Hytport">
         <activity
-                android:name=".visual.service.HYTInit"
+                android:name="org.hyt.hytport.visual.service.HYTInit"
                 android:exported="true">
             <intent-filter>
                 <action android:name="org.hyt.hytport.PERMISSION"/>
             </intent-filter>
         </activity>
         <activity
-                android:name=".visual.service.HYTLibrary"
+                android:name="org.hyt.hytport.visual.service.HYTLibrary"
                 android:exported="true">
             <intent-filter>
                 <action android:name="org.hyt.hytport.LIBRARY"/>
             </intent-filter>
         </activity>
 
-        <activity android:exported="true" android:name=".visual.service.HYTApp">
+        <activity android:exported="true" android:name="org.hyt.hytport.visual.service.HYTApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -46,7 +46,7 @@
         </activity>
 
         <service
-                android:name=".audio.service.HYTService"
+                android:name="org.hyt.hytport.audio.service.HYTService"
                 android:enabled="true"
                 android:exported="false">
             <intent-filter>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BYMIHA</string>
+    <string name="app_name">BM Player</string>
     <string name="local_service">org.hyt.hytport.START_LOCAL</string>
     <string name="remote_service">org.hyt.hytport.START_REMOTE</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
