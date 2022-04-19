@@ -10,8 +10,8 @@ android {
         applicationId "org.hyt.hytport"
         minSdk 27
         targetSdk 32
-        versionCode 3
-        versionName "1.1.1"
+        versionCode 5
+        versionName "1.2"
     }
 
     buildTypes {
@@ -55,6 +55,8 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:1.1.1"
     debugImplementation "androidx.compose.ui:ui-tooling-preview:1.1.1"
     implementation 'androidx.compose.material:material:1.1.1'
+    implementation("androidx.room:room-runtime:2.4.2")
+    annotationProcessor("androidx.room:room-compiler:2.4.2")
 
 
 }

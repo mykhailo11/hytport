@@ -19,6 +19,8 @@ class HYTBaseAudioModel: HYTAudioModel{
 
     private var _duration: Long? = 0L;
 
+    private var _order: Int = 0;
+
     init {
         _title = null;
         _artist = null;
@@ -83,4 +85,11 @@ class HYTBaseAudioModel: HYTAudioModel{
         _albumPath = album;
     }
 
+    override fun setOrder(order: Int) {
+        _order = order;
+    }
+
+    override fun getOrder(): Int {
+        return _order;
+    }
 }

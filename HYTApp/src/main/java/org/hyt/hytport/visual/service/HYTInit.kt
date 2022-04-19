@@ -139,7 +139,7 @@ class HYTInit : ComponentActivity() {
                     );
                     addStringAnnotation(
                         tag = "URL",
-                        annotation = "https://www.freeprivacypolicy.com/live/209ea70c-66ad-4e04-9757-1e5188504bdf",
+                        annotation = stringResource(R.string.hyt_privacy_link),
                         start = start,
                         end = end
                     );
