@@ -1,7 +1,7 @@
 package org.hyt.hytport.audio.api.service
 
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
-import java.util.*
 
 interface HYTAudioPlayer {
 
@@ -23,6 +23,8 @@ interface HYTAudioPlayer {
 
             fun progress(duration: Int, current: Int): Unit{}
 
+            fun onSetManager(manager: HYTAudioManager): Unit {}
+
             fun onDestroy(): Unit{}
 
         }
@@ -35,10 +37,6 @@ interface HYTAudioPlayer {
 
     fun isPlaying(consumer: (Boolean) -> Unit): Unit;
 
-    fun current(consumer: (HYTAudioModel) -> Unit): Unit;
-
-    fun queue(consumer: (Deque<HYTAudioModel>) -> Unit): Unit
-
     fun pause(): Unit;
 
     fun next(): Unit;
@@ -48,6 +46,13 @@ interface HYTAudioPlayer {
     fun seek(to: Int): Unit;
 
     fun destroy(): Unit;
+
+    fun manger(
+        empty: (() -> Unit)? = null,
+        consumer: (HYTAudioManager) -> Unit
+    ): Unit;
+
+    fun setManager(manager: HYTAudioManager): Unit;
 
     fun setAuditor(auditor: HYTAuditor): Unit;
 

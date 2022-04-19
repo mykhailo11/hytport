@@ -3,15 +3,14 @@ package org.hyt.hytport.audio.service
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 class HYTBaseAudioPlayer public constructor(
-    queueProvider: ((Deque<HYTAudioModel>) -> Unit) -> Unit,
     context: Context
 ) : HYTAudioPlayer {
 
@@ -29,7 +28,7 @@ class HYTBaseAudioPlayer public constructor(
 
     private val _context: Context;
 
-    private val _queueProvider: ((Deque<HYTAudioModel>) -> Unit) -> Unit;
+    private var _manager: HYTAudioManager? = null;
 
     private var _auditor: HYTAudioPlayer.Companion.HYTAuditor;
 
@@ -43,12 +42,13 @@ class HYTBaseAudioPlayer public constructor(
 
     init {
         _context = context;
-        _queueProvider = queueProvider;
         _auditor = _DEFAULT_AUDITOR;
         _player = MediaPlayer();
         _player.setOnCompletionListener {
-            _queueCheck { queue: Deque<HYTAudioModel> ->
-                _auditor.onComplete(queue.first);
+            _managerCheck { manager: HYTAudioManager ->
+                manager.current { audio: HYTAudioModel ->
+                    _auditor.onComplete(audio);
+                }
             }
         };
         _player.setOnErrorListener { _, _, _ ->
@@ -70,32 +70,23 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun play() {
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            val current: HYTAudioModel = queue.first;
-            if (!_prepared) {
-                _reset(current);
-            } else if (!_player.isPlaying) {
-                _player.start();
+        _managerCheck { manager: HYTAudioManager ->
+            manager.current { audio: HYTAudioModel ->
+                if (!_prepared) {
+                    _reset(audio);
+                } else if (!_player.isPlaying) {
+                    _player.start();
+                }
+                _auditor.onPlay(audio, if (_prepared) _player.currentPosition.toLong() else 0L);
             }
-            _auditor.onPlay(current, if (_prepared) _player.currentPosition.toLong() else 0L);
         }
     }
 
     override fun play(audio: HYTAudioModel) {
-        _queueProvider { queue: Deque<HYTAudioModel> ->
-            val existing: HYTAudioModel? = queue.find {
-                it.getId() == audio.getId()
-            };
-            if (existing != null) {
-                queue.remove(existing);
-                queue.offerFirst(existing);
-                _reset(existing);
-                _auditor.onNext(existing);
-            } else {
-                queue.offerFirst(audio);
-                _reset(audio);
-                _auditor.onNext(audio);
-            }
+        _managerCheck { manager: HYTAudioManager ->
+            manager.current(audio);
+            _reset(audio);
+            _auditor.onNext(audio);
         }
     }
 
@@ -103,44 +94,37 @@ class HYTBaseAudioPlayer public constructor(
         consumer(_prepared && _player.isPlaying);
     }
 
-    override fun current(consumer: (HYTAudioModel) -> Unit) {
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            consumer(queue.first);
-        }
-    }
-
-    override fun queue(consumer: (Deque<HYTAudioModel>) -> Unit) {
-        _queueProvider(consumer);
-    }
-
     override fun pause() {
         if (_prepared && _player.isPlaying) {
             _player.pause();
         }
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            _auditor.onPause(queue.first, if (_prepared) _player.currentPosition.toLong() else 0L);
+        _managerCheck { manager: HYTAudioManager ->
+            manager.current { audio: HYTAudioModel ->
+                _auditor.onPause(audio, if (_prepared) _player.currentPosition.toLong() else 0L);
+            }
         }
     }
 
     override fun next() {
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            queue.offer(queue.pop());
-            val next: HYTAudioModel = queue.first;
-            _reset(next);
-            _auditor.onNext(next);
+        _managerCheck { manager: HYTAudioManager ->
+            manager.next { audio: HYTAudioModel ->
+                _reset(audio);
+                _auditor.onNext(audio);
+            }
         }
     }
 
     override fun previous() {
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            queue.offerFirst(queue.pollLast());
-            val previous: HYTAudioModel = queue.first;
-            _reset(previous);
-            _auditor.onPrevious(previous);
+        _managerCheck { manager: HYTAudioManager ->
+            manager.previous { audio: HYTAudioModel ->
+                _reset(audio);
+                _auditor.onPrevious(audio);
+            }
         }
     }
 
-    @Synchronized private  fun _reset(audio: HYTAudioModel): Unit {
+    @Synchronized
+    private fun _reset(audio: HYTAudioModel): Unit {
         _prepared = false;
         _player.reset();
         _player.setDataSource(
@@ -152,7 +136,7 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun seek(to: Int) {
-        if (_prepared){
+        if (_prepared) {
             _player.seekTo(to);
         }
     }
@@ -168,10 +152,28 @@ class HYTBaseAudioPlayer public constructor(
         _player.release();
     }
 
+    override fun manger(
+        empty: (() -> Unit)?,
+        consumer: (HYTAudioManager) -> Unit
+    ) {
+        if (_manager != null) {
+            consumer(_manager!!);
+        } else if (empty != null){
+            empty();
+        }
+    }
+
+    override fun setManager(manager: HYTAudioManager) {
+        _manager = manager;
+        _auditor.onSetManager(_manager!!);
+    }
+
     override fun setAuditor(auditor: HYTAudioPlayer.Companion.HYTAuditor) {
         _auditor = auditor;
-        _queueCheck { queue: Deque<HYTAudioModel> ->
-            _auditor.onReady(queue.first);
+        _managerCheck { manager: HYTAudioManager ->
+            manager.current { audio: HYTAudioModel ->
+                _auditor.onReady(audio);
+            }
         }
     }
 
@@ -179,11 +181,11 @@ class HYTBaseAudioPlayer public constructor(
         _auditor = _DEFAULT_AUDITOR;
     }
 
-    private fun _queueCheck(reaction: (Deque<HYTAudioModel>) -> Unit): Unit {
-        _queueProvider { queue: Deque<HYTAudioModel> ->
-            if (queue.isNotEmpty()) {
-                reaction(queue);
-            }
+    private fun _managerCheck(
+        reaction: (HYTAudioManager) -> Unit
+    ): Unit {
+        if (_manager != null) {
+            reaction(_manager!!);
         }
     }
 
