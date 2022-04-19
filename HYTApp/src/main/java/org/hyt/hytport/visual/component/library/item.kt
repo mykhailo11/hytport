@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Text
@@ -33,7 +34,8 @@ fun item(
     empty: Painter,
     item: HYTAudioModel,
     current: Boolean,
-    click: (HYTAudioModel) -> Unit
+    click: (HYTAudioModel) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context: Context = LocalContext.current;
     var title: String by remember { mutableStateOf("loading...") };
@@ -49,7 +51,7 @@ fun item(
             }
             title = item.getTitle() ?: "unknown";
             artist = item.getArtist() ?: "unknown";
-        }, 500, TimeUnit.MILLISECONDS);
+        }, 200, TimeUnit.MILLISECONDS);
         onDispose {
             scheduled.cancel(true);
         }
@@ -57,10 +59,17 @@ fun item(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .then(modifier)
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(20.dp)
-            .clickable {
+            .padding(
+                horizontal = 0.dp,
+                vertical = 20.dp
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
                 click(item);
             }
     ) {
