@@ -130,7 +130,7 @@ class HYTApp : HYTBaseActivity() {
                 player.removeAuditor(auditor);
             }
         }
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
         ) {
@@ -154,7 +154,7 @@ class HYTApp : HYTBaseActivity() {
             if (
                 animating
                 && configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                && configuration.screenWidthDp > 500
+                && maxWidth > 700.dp
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -189,7 +189,7 @@ class HYTApp : HYTBaseActivity() {
             } else if (
                 animating
                 && configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                && configuration.screenHeightDp > 500
+                && maxHeight > 600.dp
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
