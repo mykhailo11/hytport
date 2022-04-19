@@ -9,7 +9,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.access.HYTAudioRepository
+import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.service.HYTService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -48,6 +51,15 @@ abstract class HYTBaseActivity : ComponentActivity() {
                         override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                             if (binder != null) {
                                 player = binder as HYTBinder?;
+                                player?.manger(
+                                    empty = {
+                                        val repository: HYTAudioRepository = HYTAudioFactory
+                                            .getAudioRepository(contentResolver);
+                                        repository.getAllAudio { items: MutableList<HYTAudioModel> ->
+                                            player?.setManager(HYTAudioFactory.getManager(items));
+                                        }
+                                    }
+                                ) {  };
                             }
                             _connection = this;
                         }
