@@ -7,11 +7,13 @@ import android.app.Service
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
+import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import com.spotify.protocol.types.Artist
 import com.spotify.protocol.types.Track
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.factory.HYTAudioFactory
@@ -35,7 +37,8 @@ class HYTAudioUtil {
         public fun mediaSession(id: String, context: Service, player: HYTAudioPlayer): (
                 (
                 MediaSessionCompat,
-                PlaybackStateCompat.Builder
+                PlaybackStateCompat.Builder,
+                MediaMetadataCompat.Builder
             ) -> Unit
         ) -> Unit {
             val mediaSession: MediaSessionCompat = MediaSessionCompat(
@@ -48,7 +51,8 @@ class HYTAudioUtil {
                             PlaybackStateCompat.ACTION_PAUSE or
                             PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
                             PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                )
+                );
+            val metadataHolder: MediaMetadataCompat.Builder = MediaMetadataCompat.Builder();
             mediaSession.setCallback(
                 object : MediaSessionCompat.Callback() {
 
@@ -57,11 +61,15 @@ class HYTAudioUtil {
                     }
 
                     override fun onSkipToQueueItem(id: Long) {
-                        player.queue { queue ->
-                            val audio: HYTAudioModel = queue.first {
-                                id == it.getId()
-                            };
-                            player.play(audio);
+                        player.manger { manager: HYTAudioManager ->
+                            manager.current(
+                                HYTAudioFactory.getAudioModel().apply {
+                                    setId(id);
+                                }
+                            );
+                            manager.current { current: HYTAudioModel ->
+                                player.play(current);
+                            }
                         }
                     }
 
@@ -84,9 +92,14 @@ class HYTAudioUtil {
                 }
             );
             mediaSession.setPlaybackState(playbackStateHolder.build());
+            mediaSession.setMetadata(metadataHolder.build());
             mediaSession.isActive = true;
-            return { consumer: (MediaSessionCompat, PlaybackStateCompat.Builder) -> Unit ->
-                consumer(mediaSession, playbackStateHolder);
+            return { consumer: (
+                MediaSessionCompat,
+                PlaybackStateCompat.Builder,
+                MediaMetadataCompat.Builder
+            ) -> Unit ->
+                consumer(mediaSession, playbackStateHolder, metadataHolder);
             }
         }
 
