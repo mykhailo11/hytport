@@ -63,7 +63,7 @@ fun item(
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(
-                horizontal = 0.dp,
+                horizontal = 10.dp,
                 vertical = 20.dp
             )
             .clickable(

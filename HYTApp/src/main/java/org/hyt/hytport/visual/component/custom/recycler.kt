@@ -9,15 +9,71 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
+import java.util.*
 import java.util.concurrent.ScheduledExecutorService
+import kotlin.collections.ArrayList
+
+class HYTItemTouch(
+    focus: (HYTAudioModel?, HYTAudioModel?) -> Boolean
+) : ItemTouchHelper.SimpleCallback(
+    ItemTouchHelper.UP
+            or ItemTouchHelper.DOWN
+            or ItemTouchHelper.LEFT
+            or ItemTouchHelper.RIGHT,
+    0
+) {
+
+    private val _focus: (HYTAudioModel?, HYTAudioModel?) -> Boolean;
+
+    init {
+        _focus = focus;
+    }
+
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+    }
+
+    override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+        if (
+            viewHolder == null
+            || actionState == ItemTouchHelper.ACTION_STATE_IDLE
+            || actionState == ItemTouchHelper.ACTION_STATE_SWIPE
+        ) {
+            _focus(null, null);
+        } else if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+            _focus((viewHolder as HYTAdapter.Companion.HYTHolder).item, null);
+        }
+        super.onSelectedChanged(viewHolder, actionState)
+    }
+
+    override fun onMove(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder,
+        target: RecyclerView.ViewHolder
+    ): Boolean {
+        val movingIndex: Int = viewHolder.adapterPosition;
+        val hoveringIndex: Int = target.adapterPosition;
+        val adapter: HYTAdapter = (recyclerView.adapter as HYTAdapter);
+        val movingAudio: HYTAudioModel = adapter.getAudio(movingIndex);
+        val hoveringAudio: HYTAudioModel = adapter.getAudio(hoveringIndex);
+        val move: Boolean = _focus(movingAudio, hoveringAudio);
+        if (move) {
+            (recyclerView.adapter as HYTAdapter).move(movingAudio, hoveringAudio);
+        }
+        return move;
+    }
+
+
+}
 
 class HYTAdapter(
     context: Context,
-    items: List<HYTAudioModel>,
+    manager: HYTAudioManager,
     item: @Composable (HYTAudioModel) -> Unit
 ) : RecyclerView.Adapter<HYTAdapter.Companion.HYTHolder>() {
 
@@ -29,6 +85,8 @@ class HYTAdapter(
 
             val view: ComposeView;
 
+            var item: HYTAudioModel? = null;
+
             init {
                 this.view = view;
             }
@@ -37,19 +95,26 @@ class HYTAdapter(
 
     }
 
-    private var _items: List<HYTAudioModel>;
+    private var _manager: HYTAudioManager;
 
     private val _item: @Composable (HYTAudioModel) -> Unit
 
-    private var _filtered: MutableList<HYTAudioModel>;
+    private var _filtered: MutableList<HYTAudioModel> = ArrayList();
 
     private val _context: Context;
 
     init {
-        _items = items;
-        _filtered = items.toMutableList();
+        _manager = manager;
+        _manager.queue { items: MutableList<HYTAudioModel> ->
+            _filtered.addAll(items);
+            notifyDataSetChanged();
+        }
         _item = item;
         _context = context;
+    }
+
+    override fun getItemId(position: Int): Long {
+        return _filtered[position].getId();
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HYTHolder {
@@ -62,6 +127,7 @@ class HYTAdapter(
         holder.view.setContent {
             _item(audio);
         }
+        holder.item = audio;
     }
 
     override fun getItemCount(): Int {
@@ -69,36 +135,58 @@ class HYTAdapter(
     }
 
     public fun filter(filter: (HYTAudioModel) -> Boolean): Unit {
-        _items.forEach { audio: HYTAudioModel ->
-            val appeal: Boolean = filter(audio);
-            val index: Int = _filtered.indexOf(audio);
-            when {
-                !appeal && index != -1 -> {
-                    _filtered.removeAt(index);
-                    notifyItemRemoved(index);
-                }
-                appeal && index == -1 -> {
-                    val next: Int = _filtered.indexOfFirst { filtered: HYTAudioModel ->
-                        filtered.getOrder() > audio.getOrder();
+        _manager.queue { items: List<HYTAudioModel> ->
+            items.forEach { audio: HYTAudioModel ->
+                val appeal: Boolean = filter(audio);
+                val index: Int = _filtered.indexOf(audio);
+                when {
+                    !appeal && index != -1 -> {
+                        _filtered.removeAt(index);
+                        notifyItemRemoved(index);
                     }
-                    if (next > 0) {
-                        _filtered.add(next - 1, audio);
-                        notifyItemInserted(next - 1);
-                    }else {
-                        _filtered.add(0, audio);
-                        notifyItemInserted(0);
+                    appeal && index == -1 -> {
+                        val next: Int = _filtered.indexOfFirst { filtered: HYTAudioModel ->
+                            filtered.getOrder() > audio.getOrder();
+                        }
+                        if (next > 0) {
+                            _filtered.add(next - 1, audio);
+                            notifyItemInserted(next - 1);
+                        } else {
+                            _filtered.add(0, audio);
+                            notifyItemInserted(0);
+                        }
                     }
                 }
+            };
+        }
+    }
+
+    public fun getAudio(position: Int): HYTAudioModel {
+        return _filtered[position];
+    }
+
+    public fun move(from: HYTAudioModel, to: HYTAudioModel): Unit {
+        val fromFilteredIndex: Int = _filtered.indexOf(from);
+        val toFilteredIndex: Int = _filtered.indexOf(to);
+        if (fromFilteredIndex != -1 && toFilteredIndex != -1) {
+            Collections.swap(_filtered, fromFilteredIndex, toFilteredIndex);
+        }
+        _manager.queue { items: MutableList<HYTAudioModel> ->
+            val fromIndex: Int = items.indexOf(from);
+            val toIndex: Int = items.indexOf(to);
+            if (fromIndex != -1 && toIndex != -1) {
+                Collections.swap(items, fromIndex, toIndex);
             }
-        };
+        }
+        notifyItemMoved(fromFilteredIndex, toFilteredIndex);
     }
 
-    public fun getItems(): List<HYTAudioModel> {
-        return _items;
+    public fun getFiltered(): List<HYTAudioModel> {
+        return _filtered;
     }
 
-    public fun setItems(items: List<HYTAudioModel>): Unit {
-        _items = items;
+    public fun setManager(manager: HYTAudioManager): Unit {
+        _manager = manager;
     }
 
 }
@@ -106,9 +194,10 @@ class HYTAdapter(
 @Composable
 fun recycler(
     executor: ScheduledExecutorService,
-    items: List<HYTAudioModel>,
+    manager: HYTAudioManager,
     filter: (HYTAudioModel) -> Boolean,
     modifier: Modifier = Modifier,
+    focus: (HYTAudioModel?, HYTAudioModel?) -> Boolean,
     item: @Composable (HYTAudioModel) -> Unit,
 ) {
     var view: RecyclerView? by remember { mutableStateOf(null) };
@@ -121,7 +210,7 @@ fun recycler(
                     val adapter: HYTAdapter = HYTAdapter(
                         context = context,
                         item = item,
-                        items = items
+                        manager = manager
                     );
                     val inflater: LayoutInflater = context
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater;
@@ -129,12 +218,14 @@ fun recycler(
                         .inflate(R.layout.hyt_recycler, null) as RecyclerView;
                     recycler.adapter = adapter;
                     recycler.layoutManager = LinearLayoutManager(context);
+                    val itemHandler: ItemTouchHelper = ItemTouchHelper(HYTItemTouch(focus));
+                    itemHandler.attachToRecyclerView(recycler);
                     view = recycler;
                     recycler;
                 },
                 update = { recycler: RecyclerView ->
                     val adapter: HYTAdapter = recycler.adapter as HYTAdapter;
-                    adapter.setItems(items);
+                    adapter.setManager(manager);
                     adapter.filter(filter);
                 },
                 modifier = Modifier
