@@ -22,5 +22,6 @@
     <color name="hyt_white">#FFFFFF</color>
     <color name="hyt_black">#000000</color>
     <color name="hyt_press">#2BFFA4</color>
+    <color name="hyt_accent_grey">#1A1A33</color>
     <color name="hyt_transparent">#00000000</color>
 </resources>
