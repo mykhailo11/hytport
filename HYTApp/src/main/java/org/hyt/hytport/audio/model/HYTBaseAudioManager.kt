@@ -15,7 +15,10 @@ class HYTBaseAudioManager public constructor(
 
     init {
         _queue = queue;
-        _current = queue.first().getId();
+        val first: HYTAudioModel? = queue.firstOrNull();
+        if (first != null) {
+            _current = first.getId();
+        }
     }
 
     override fun shuffle(shuffle: Boolean) {
