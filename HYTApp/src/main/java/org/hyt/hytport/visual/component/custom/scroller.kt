@@ -45,7 +45,7 @@ fun scroller(
     };
     val threshold: Float by remember(layout) {
         derivedStateOf {
-            5.0f * (layout.findLastVisibleItemPosition()
+            10.0f * (layout.findLastVisibleItemPosition()
                     - layout.findFirstVisibleItemPosition()).toFloat() / layout.itemCount.toFloat();
         }
     }
@@ -138,14 +138,20 @@ fun scroller(
             .onGloballyPositioned { coordinates: LayoutCoordinates ->
                 barHeight = coordinates.size.height
             }
+            .padding(
+                start = 0.dp,
+                top = 0.dp,
+                end = 10.dp,
+                bottom = 0.dp
+            )
     ) {
         Box(
             modifier = Modifier
                 .offset {
                     IntOffset(0, scrollerState.offset);
                 }
-                .requiredWidth(4.dp)
-                .requiredHeight(80.dp)
+                .requiredWidth(5.dp)
+                .requiredHeight(60.dp)
                 .background(
                     color = scrollerColor,
                     shape = RoundedCornerShape(50)

@@ -186,7 +186,14 @@ class HYTAdapter(
     }
 
     public fun setManager(manager: HYTAudioManager): Unit {
-        _manager = manager;
+        if (manager != _manager) {
+            _manager = manager;
+            _manager.queue { items: MutableList<HYTAudioModel> ->
+                _filtered.clear();
+                _filtered.addAll(items);
+                notifyDataSetChanged();
+            }
+        }
     }
 
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -24,6 +26,7 @@ import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.util.HYTUtil
 import org.hyt.hytport.visual.component.fonts
+import org.hyt.hytport.visual.component.util.pressed
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -35,6 +38,7 @@ fun item(
     item: HYTAudioModel,
     current: Boolean,
     click: (HYTAudioModel) -> Unit,
+    focus: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context: Context = LocalContext.current;
@@ -59,6 +63,10 @@ fun item(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .padding(
+                horizontal = 10.dp,
+                vertical = 0.dp
+            )
             .then(modifier)
             .fillMaxWidth()
             .wrapContentHeight()
@@ -81,6 +89,18 @@ fun item(
                 modifier = Modifier
                     .requiredHeight(50.dp)
                     .aspectRatio(1.0f)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = pressed(
+                                pressed = {
+                                    focus?.invoke(true);
+                                },
+                                react = { up: Boolean ->
+                                    focus?.invoke(!up);
+                                }
+                            )
+                        )
+                    }
             );
         } else {
             Image(
@@ -90,6 +110,18 @@ fun item(
                 modifier = Modifier
                     .requiredHeight(50.dp)
                     .aspectRatio(1.0f)
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = pressed(
+                                pressed = {
+                                    focus?.invoke(true);
+                                },
+                                react = { up: Boolean ->
+                                    focus?.invoke(!up);
+                                }
+                            )
+                        )
+                    }
             )
         };
         Column(

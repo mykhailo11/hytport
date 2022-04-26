@@ -8,4 +8,6 @@ interface HYTAudioRepository {
 
     fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit;
 
+    fun getType(): String;
+
 }

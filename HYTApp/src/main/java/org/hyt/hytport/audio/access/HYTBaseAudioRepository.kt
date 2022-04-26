@@ -44,9 +44,13 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
         _resolver = resolver;
     }
 
+    override fun getType(): String {
+        return "local";
+    }
+
     override fun getAllAudio(ready: (MutableList<HYTAudioModel>) -> Unit): Unit {
         ready(_getAudio(
-            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._QUERY_IS_MUSIC,
+            _QUERY_IS_MUSIC,
             null,
             _getStorage()
         ));
@@ -55,7 +59,7 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
     override fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit {
         val parameters: Array<String> = arrayOf(id.toString());
         ready(_getAudio(
-            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._QUERY__ID,
+            _QUERY__ID,
             parameters,
             _getStorage()
         ).first());
@@ -76,10 +80,10 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
     ): MutableList<HYTAudioModel> {
         val cursor: Cursor? = _resolver.query(
             storage,
-            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._PROJECTION,
+            _PROJECTION,
             query,
             parameters,
-            org.hyt.hytport.audio.access.HYTBaseAudioRepository.Companion._ORDER_BY_DATE
+            _ORDER_BY_DATE
         );
         val items: MutableList<HYTAudioModel> = ArrayList();
         if (cursor != null && cursor.moveToFirst()) {

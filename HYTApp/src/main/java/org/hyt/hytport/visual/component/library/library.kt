@@ -1,7 +1,6 @@
 package org.hyt.hytport.visual.component.library
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,12 +41,12 @@ fun library(
     var filter: (HYTAudioModel) -> Boolean by remember { mutableStateOf({ true }) };
     var current: Long by remember { mutableStateOf(-1L); };
     var moving: Long by remember { mutableStateOf(-1L) };
-    val auditor: HYTBinder.Companion.HYTAuditor by remember(player) {
+    val auditor: HYTBinder.Companion.HYTAuditor by remember(player, currentManager) {
         derivedStateOf {
             object : HYTBinder.Companion.HYTAuditor {
 
                 override fun onReady(audio: HYTAudioModel) {
-                    player.manger { actualManager: HYTAudioManager ->
+                    player.manager { actualManager: HYTAudioManager ->
                         currentManager = actualManager;
                         currentManager?.current { currentAudio: HYTAudioModel ->
                             current = currentAudio.getId();
@@ -63,11 +62,9 @@ fun library(
                     current = audio.getId();
                 }
 
-                override fun onSetManager(manager: HYTAudioManager) {
+                override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
                     currentManager = manager;
-                    manager.current { audio: HYTAudioModel ->
-                        current = audio.getId();
-                    }
+                    current = audio.getId();
                 }
             }
         }
@@ -86,7 +83,10 @@ fun library(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(
+                    horizontal = 10.dp,
+                    vertical = 20.dp
+                )
         ) {
             Image(
                 painter = painterResource(R.drawable.hyt_library_close_200dp),
@@ -123,12 +123,6 @@ fun library(
             Row(
                 modifier = Modifier
                     .weight(1.0f)
-                    .padding(
-                        start = 5.dp,
-                        end = 5.dp,
-                        top = 0.dp,
-                        bottom = 10.dp
-                    )
             ) {
                 recycler(
                     executor = executor,
@@ -147,10 +141,7 @@ fun library(
                         }
                     },
                     modifier = Modifier
-                        .padding(
-                            horizontal = 20.dp,
-                            vertical = 0.dp
-                        )
+                        .weight(1.0f)
                 ) @Composable { audio: HYTAudioModel ->
                     val focus: Boolean by remember(moving, audio) {
                         derivedStateOf {

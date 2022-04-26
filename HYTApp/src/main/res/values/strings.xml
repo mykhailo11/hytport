@@ -9,4 +9,5 @@
     <string name="hyt_service_destroy">org.hyt.hytport.DESTROY</string>
     <string name="hyt_channel">hyt_channel</string>
     <string name="spotify_client_id">9802d6e65fd944fe8fceae99e039ff25</string>
+    <string name="hyt_mainstream">mainstream</string>
 </resources>

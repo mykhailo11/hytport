@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.visual.component.control.control
@@ -44,6 +45,10 @@ fun player(
                 }
 
                 override fun onPrevious(audio: HYTAudioModel) {
+                    _setMeta(audio);
+                }
+
+                override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
                     _setMeta(audio);
                 }
 
