@@ -4,10 +4,8 @@ import android.content.ContentResolver
 import android.content.Context
 import org.hyt.hytport.audio.access.HYTRemoteAudioRepository
 import org.hyt.hytport.audio.api.access.HYTAudioRepository
-import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.audio.model.HYTBaseAudioManager
 import org.hyt.hytport.audio.model.HYTBaseAudioModel
 import org.hyt.hytport.audio.service.HYTWrapperBinder
 
@@ -18,10 +16,6 @@ class HYTAudioFactory {
 
         fun getAudioModel(): HYTAudioModel{
             return HYTBaseAudioModel();
-        }
-
-        fun getManager(queue: MutableList<HYTAudioModel>): HYTAudioManager {
-            return HYTBaseAudioManager(queue);
         }
 
         fun getAudioRepository(resolver: ContentResolver): HYTAudioRepository {
