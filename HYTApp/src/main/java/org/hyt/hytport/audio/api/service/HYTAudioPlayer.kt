@@ -47,7 +47,7 @@ interface HYTAudioPlayer {
 
     fun destroy(): Unit;
 
-    fun manger(
+    fun manager(
         empty: (() -> Unit)? = null,
         consumer: (HYTAudioManager) -> Unit
     ): Unit;

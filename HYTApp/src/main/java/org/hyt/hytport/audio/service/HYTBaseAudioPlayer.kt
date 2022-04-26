@@ -152,7 +152,7 @@ class HYTBaseAudioPlayer public constructor(
         _player.release();
     }
 
-    override fun manger(
+    override fun manager(
         empty: (() -> Unit)?,
         consumer: (HYTAudioManager) -> Unit
     ) {
