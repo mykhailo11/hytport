@@ -2,14 +2,18 @@ package org.hyt.hytport.audio.service
 
 import android.media.audiofx.Visualizer
 import android.os.Binder
+import kotlinx.coroutines.runBlocking
 import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.audio.api.service.HYTQueueProvider
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
-class HYTWrapperBinder : Binder(), HYTBinder {
+class HYTWrapperBinder(
+    provider: HYTQueueProvider
+) : Binder(), HYTBinder {
 
     private var _player: HYTAudioPlayer? = null;
 
@@ -20,6 +24,8 @@ class HYTWrapperBinder : Binder(), HYTBinder {
     private val _visualizer: Visualizer;
 
     private val _executor: ScheduledExecutorService = Executors.newScheduledThreadPool(2);
+
+    private val _provider: HYTQueueProvider;
 
     init {
         _auditors = ArrayList();
@@ -97,6 +103,7 @@ class HYTWrapperBinder : Binder(), HYTBinder {
             }
 
         };
+        _provider = provider;
         _visualizer = Visualizer(0);
         _visualizer.captureSize = Visualizer.getCaptureSizeRange()[1];
         _visualizer.setDataCaptureListener(
@@ -170,12 +177,12 @@ class HYTWrapperBinder : Binder(), HYTBinder {
         _player = null;
     }
 
-    override fun manger(
+    override fun manager(
         empty: (() -> Unit)?,
         consumer: (HYTAudioManager) -> Unit,
     ) {
         _playerCheck { player: HYTAudioPlayer ->
-            player.manger(empty, consumer);
+            player.manager(empty, consumer);
         }
     }
 
@@ -200,7 +207,7 @@ class HYTWrapperBinder : Binder(), HYTBinder {
     override fun addAuditor(auditor: HYTBinder.Companion.HYTAuditor) {
         _auditors.add(auditor);
         _playerCheck { player: HYTAudioPlayer ->
-            player.manger { manager: HYTAudioManager ->
+            player.manager { manager: HYTAudioManager ->
                 manager.current { audio: HYTAudioModel ->
                     auditor.onReady(audio);
                 }
@@ -229,6 +236,21 @@ class HYTWrapperBinder : Binder(), HYTBinder {
     private fun _playerCheck(reaction: (HYTAudioPlayer) -> Unit): Unit {
         if (_player != null) {
             reaction(_player!!);
+        }
+    }
+
+    override suspend fun save(name: String) {
+        _player?.manager { manager: HYTAudioManager ->
+            runBlocking {
+                _provider.save(
+                    name,
+                    manager
+                ) { saved: HYTAudioManager ->
+                    _auditors.forEach { auditor: HYTBinder.Companion.HYTAuditor ->
+                        auditor.onSave(saved);
+                    }
+                }
+            }
         }
     }
 

@@ -2,7 +2,6 @@ package org.hyt.hytport.audio.service
 
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.IBinder
@@ -10,23 +9,30 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import androidx.media.app.NotificationCompat.DecoratedMediaCustomViewStyle
 import androidx.media.session.MediaButtonReceiver
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.access.HYTDatabase
 import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTAudioPlayer
 import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.audio.api.service.HYTQueueProvider
 import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
+import org.hyt.hytport.audio.factory.HYTQueueFactory
 import org.hyt.hytport.audio.util.HYTAudioUtil
 import org.hyt.hytport.util.HYTUtil
 
-class HYTService : Service() {
+class HYTService : LifecycleService() {
 
     private lateinit var _binder: HYTBinder;
 
-    private lateinit var _player: HYTAudioPlayer;
+    private var _player: HYTAudioPlayer? = null;
 
     private var _playIntent: String? = null;
 
@@ -35,6 +41,10 @@ class HYTService : Service() {
     private var _previousIntent: String? = null;
 
     private var _destroyIntent: String? = null;
+
+    private var _mainstream: String? = null;
+
+    private var _queueProvider: HYTQueueProvider? = null;
 
     private lateinit var _mediaSessionEditor: (
             (
@@ -55,7 +65,11 @@ class HYTService : Service() {
 
     override fun onCreate() {
         super.onCreate();
-        _binder = HYTAudioFactory.getBinder();
+        _queueProvider = HYTQueueFactory.getQueueProvider(
+            HYTAudioFactory.getAudioRepository(contentResolver),
+            HYTDatabase(this)
+        );
+        _binder = HYTAudioFactory.getBinder(_queueProvider!!);
         _playIntent = resources.getString(R.string.hyt_service_play);
         _nextIntent = resources.getString(R.string.hyt_service_next);
         _previousIntent = resources.getString(R.string.hyt_service_previous);
@@ -89,7 +103,7 @@ class HYTService : Service() {
             }
 
             override fun onComplete(audio: HYTAudioModel) {
-                _player.next();
+                _player!!.next();
             }
 
             override fun onSetManager(manager: HYTAudioManager) {
@@ -131,9 +145,31 @@ class HYTService : Service() {
             }
 
         }
+        _mainstream = resources.getString(R.string.hyt_mainstream);
         _player = HYTAudioPlayerFactory.getAudioPlayer(this);
-        _binder.setPlayer(_player);
+        _binder.setPlayer(_player!!);
         _binder.addAuditor(_auditor);
+        lifecycleScope.launch {
+            _queueProvider!!.getAll { queues: List<String> ->
+                runBlocking {
+                    _queueProvider!!.getByName(_mainstream!!) { manager: HYTAudioManager ->
+                        if (queues.contains(_mainstream!!)) {
+                            _player?.setManager(manager);
+                        } else {
+                            runBlocking {
+                                _queueProvider!!.mainstream { items: List<HYTAudioModel> ->
+                                    manager.queue { queue: MutableList<HYTAudioModel> ->
+                                        queue.addAll(items);
+                                        manager.next {  };
+                                        _player?.setManager(manager);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         val destroyIntent: PendingIntent = HYTUtil.wrapIntentForService(
             this, Intent(_destroyIntent)
         );
@@ -212,11 +248,15 @@ class HYTService : Service() {
         return super.onStartCommand(intent, flags, startId);
     }
 
-
     override fun onDestroy() {
+        if (_mainstream != null) {
+            runBlocking {
+                _binder.save(_mainstream!!);
+            }
+        }
         _binder.removeAuditor(_auditor);
         _binder.destroy();
-        _player.destroy();
+        _player?.destroy();
         _mediaSessionEditor { mediaSession: MediaSessionCompat,
                               _, _ ->
             mediaSession.release();
@@ -228,7 +268,8 @@ class HYTService : Service() {
         super.onDestroy();
     }
 
-    override fun onBind(intent: Intent?): IBinder {
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
         return _binder;
     }
 

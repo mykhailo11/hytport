@@ -61,7 +61,7 @@ class HYTAudioUtil {
                     }
 
                     override fun onSkipToQueueItem(id: Long) {
-                        player.manger { manager: HYTAudioManager ->
+                        player.manager { manager: HYTAudioManager ->
                             manager.current(
                                 HYTAudioFactory.getAudioModel().apply {
                                     setId(id);
