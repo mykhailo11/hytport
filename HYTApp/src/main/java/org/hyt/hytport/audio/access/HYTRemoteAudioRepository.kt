@@ -40,6 +40,10 @@ class HYTRemoteAudioRepository public constructor(
         _requestQueue = Volley.newRequestQueue(_context);
     }
 
+    override fun getType(): String {
+        return "remote";
+    }
+
     override fun getAllAudio(ready: (MutableList<HYTAudioModel>) -> Unit): Unit {
         _getAudio("${_base}/${_endpoints[HYTEndpoints.GET_ALL]}", ready);
     }
