@@ -88,10 +88,10 @@ class HYTWrapperBinder(
                 }
             }
 
-            override fun onSetManager(manager: HYTAudioManager) {
+            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
                 _executor.submit {
                     _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
-                        auditor.onSetManager(manager);
+                        auditor.onSetManager(manager, audio);
                     }
                 }
             }

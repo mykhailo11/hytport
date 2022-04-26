@@ -106,11 +106,9 @@ class HYTService : LifecycleService() {
                 _player!!.next();
             }
 
-            override fun onSetManager(manager: HYTAudioManager) {
-                manager.current { audio: HYTAudioModel ->
-                    _setMetadata(audio);
-                    _setNotification(audio);
-                }
+            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
+                _setMetadata(audio);
+                _setNotification(audio);
             }
 
             private fun _setMetadata(audio: HYTAudioModel): Unit {
@@ -160,7 +158,7 @@ class HYTService : LifecycleService() {
                                 _queueProvider!!.mainstream { items: List<HYTAudioModel> ->
                                     manager.queue { queue: MutableList<HYTAudioModel> ->
                                         queue.addAll(items);
-                                        manager.next {  };
+                                        manager.next { };
                                         _player?.setManager(manager);
                                     }
                                 }

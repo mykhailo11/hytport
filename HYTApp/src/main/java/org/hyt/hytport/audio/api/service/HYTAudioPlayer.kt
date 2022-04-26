@@ -23,7 +23,7 @@ interface HYTAudioPlayer {
 
             fun progress(duration: Int, current: Int): Unit{}
 
-            fun onSetManager(manager: HYTAudioManager): Unit {}
+            fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel): Unit {}
 
             fun onDestroy(): Unit{}
 

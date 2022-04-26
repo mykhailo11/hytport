@@ -164,8 +164,17 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun setManager(manager: HYTAudioManager) {
-        _manager = manager;
-        _auditor.onSetManager(_manager!!);
+        if (_manager == null) {
+            _manager = manager;
+            _manager!!.current { audio: HYTAudioModel ->
+                _auditor.onSetManager(_manager!!, audio);
+            }
+        } else {
+            _manager!!.current { audio: HYTAudioModel ->
+                _manager = manager;
+                _auditor.onSetManager(_manager!!, audio);
+            }
+        }
     }
 
     override fun setAuditor(auditor: HYTAudioPlayer.Companion.HYTAuditor) {

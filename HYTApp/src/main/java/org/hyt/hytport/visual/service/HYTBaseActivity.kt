@@ -51,15 +51,6 @@ abstract class HYTBaseActivity : ComponentActivity() {
                         override fun onServiceConnected(component: ComponentName?, binder: IBinder?) {
                             if (binder != null) {
                                 player = binder as HYTBinder?;
-                                player?.manger(
-                                    empty = {
-                                        val repository: HYTAudioRepository = HYTAudioFactory
-                                            .getAudioRepository(contentResolver);
-                                        repository.getAllAudio { items: MutableList<HYTAudioModel> ->
-                                            player?.setManager(HYTAudioFactory.getManager(items));
-                                        }
-                                    }
-                                ) {  };
                             }
                             _connection = this;
                         }
