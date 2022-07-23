@@ -9,4 +9,7 @@
     <string name="hyt_service_destroy">org.hyt.hytport.DESTROY</string>
     <string name="hyt_channel">hyt_channel</string>
     <string name="spotify_client_id">9802d6e65fd944fe8fceae99e039ff25</string>
+    <string name="hyt_mainstream">mainstream</string>
+    <string name="hyt_hidden">hidden</string>
+    <string name="hyt_remote_test">http://192.168.0.101:8080/audio</string>
 </resources>

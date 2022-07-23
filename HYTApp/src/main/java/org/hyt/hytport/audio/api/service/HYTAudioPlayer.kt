@@ -9,7 +9,7 @@ interface HYTAudioPlayer {
 
         interface HYTAuditor {
 
-            fun onReady(audio: HYTAudioModel): Unit{}
+            fun onReady(audio: HYTAudioModel?, current: Long): Unit{}
 
             fun onPlay(audio: HYTAudioModel, current: Long): Unit{}
 
@@ -23,13 +23,19 @@ interface HYTAudioPlayer {
 
             fun progress(duration: Int, current: Int): Unit{}
 
-            fun onSetManager(manager: HYTAudioManager): Unit {}
+            fun onSeek(audio: HYTAudioModel, duration: Int, to: Int): Unit {}
+
+            fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel?): Unit {}
 
             fun onDestroy(): Unit{}
 
         }
 
     }
+
+    fun current(consumer: (Long) -> Unit): Unit;
+
+    fun respectFocus(respect: Boolean): Unit;
 
     fun play(): Unit;
 
@@ -47,7 +53,7 @@ interface HYTAudioPlayer {
 
     fun destroy(): Unit;
 
-    fun manger(
+    fun manager(
         empty: (() -> Unit)? = null,
         consumer: (HYTAudioManager) -> Unit
     ): Unit;

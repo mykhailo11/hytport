@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -30,6 +31,12 @@ fun cover(
     val coverAnimation: Int by animateIntAsState(if (show) 0 else 50);
     Box(
         modifier = modifier
+            .sizeIn(
+                minWidth = 0.dp,
+                minHeight = 0.dp,
+                maxHeight = 250.dp,
+                maxWidth = 250.dp
+            )
             .then(modifier)
     ) {
         val coverModifier: Modifier = Modifier
@@ -42,7 +49,7 @@ fun cover(
                 modifier = coverModifier
                     .border(
                         width = 3.dp,
-                        color = colorResource(R.color.hyt_grey),
+                        color = colorResource(R.color.hyt_accent_grey),
                         shape = RoundedCornerShape(coverAnimation)
                     )
                     .padding(2.dp)
@@ -62,7 +69,7 @@ fun cover(
                 modifier = coverModifier
                     .border(
                         width = 3.dp,
-                        color = colorResource(R.color.hyt_grey),
+                        color = colorResource(R.color.hyt_accent_grey),
                         shape = CircleShape
                     )
                     .padding(2.dp)

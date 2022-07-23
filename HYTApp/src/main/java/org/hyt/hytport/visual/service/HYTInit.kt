@@ -28,7 +28,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import org.hyt.hytport.R
 import org.hyt.hytport.graphics.factory.HYTGLFactory
 import org.hyt.hytport.util.HYTUtil
+import org.hyt.hytport.visual.api.model.HYTPopState
 import org.hyt.hytport.visual.component.surface.pop
+import org.hyt.hytport.visual.component.surface.rememberPopState
 import org.hyt.hytport.visual.component.surface.surface
 
 class HYTInit : ComponentActivity() {
@@ -46,9 +48,56 @@ class HYTInit : ComponentActivity() {
             emptyMap()
         )
         setContent {
-            var playbackGranted: Boolean by remember {
+            val context: Context = LocalContext.current;
+            val uriHandler: UriHandler = LocalUriHandler.current;
+            val playbackContent: AnnotatedString = buildAnnotatedString {
+                append(stringResource(R.string.hyt_playback_permission))
+            }
+            val processingContent: AnnotatedString = buildAnnotatedString {
+                append(stringResource(R.string.hyt_capture_permission));
+                append(" ")
+                pushStyle(
+                    SpanStyle(
+                        color = colorResource(R.color.hyt_white),
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                )
+                append(stringResource(R.string.hyt_capture_permission_note));
+                pop();
+            }
+            val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
+            val privacy: String = stringResource(R.string.hyt_privacy_policy_link);
+            val privacyContent: AnnotatedString = buildAnnotatedString {
+                append(origin);
+                append(" ");
+                pushStyle(
+                    SpanStyle(
+                        color = colorResource(R.color.hyt_grey),
+                        textDecoration = TextDecoration.Underline,
+                    )
+                );
+                pushStringAnnotation(
+                    tag = "URL",
+                    annotation = stringResource(R.string.hyt_privacy_link)
+                )
+                append(privacy);
+                pop();
+            }
+
+
+            val popState: HYTPopState = rememberPopState(
+                initialContent = playbackContent,
+                initialConfirm = remember {
+                    "Accept"
+                },
+                initialTitle = remember {
+                    "Playback Permission"
+                }
+            );
+            var privacyAccepted: Boolean by remember { mutableStateOf(false) };
+            var playbackGranted: Boolean by remember(popState) {
                 mutableStateOf(
-                    checkSelfPermission(
+                    (checkSelfPermission(
                         Manifest.permission.MODIFY_AUDIO_SETTINGS
                     ) == PackageManager.PERMISSION_GRANTED
                             && checkSelfPermission(
@@ -62,18 +111,45 @@ class HYTInit : ComponentActivity() {
                     ) == PackageManager.PERMISSION_GRANTED
                             && checkSelfPermission(
                         Manifest.permission.WAKE_LOCK
-                    ) == PackageManager.PERMISSION_GRANTED
+                    ) == PackageManager.PERMISSION_GRANTED)
                 )
             };
             var processingGranted: Boolean by remember {
                 mutableStateOf(
-                    checkSelfPermission(
+                    (checkSelfPermission(
                         Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
+                    ) == PackageManager.PERMISSION_GRANTED)
                 )
-            };
-            var policyAccepted: Boolean by remember { mutableStateOf(false) };
-            val uriHandler: UriHandler = LocalUriHandler.current;
+            }
+            LaunchedEffect(
+                privacyAccepted,
+                playbackGranted,
+                processingGranted
+            ) {
+                if (!playbackGranted) {
+                    popState.content(playbackContent);
+                    popState.title("Playback Permission");
+                } else if (!processingGranted) {
+                    popState.content(processingContent);
+                    popState.title("Capture Permission");
+                } else if (!privacyAccepted) {
+                    popState.content(privacyContent);
+                    popState.title("Privacy Policy");
+                } else {
+                    getSharedPreferences(
+                        resources.getString(R.string.preferences),
+                        Context.MODE_PRIVATE
+                    )
+                        .edit()
+                        .putBoolean(
+                            resources.getString(R.string.preferences_permissions),
+                            true
+                        )
+                        .commit();
+                    startActivityIfNeeded(Intent(context, HYTApp::class.java), 100);
+                    finish();
+                }
+            }
             val permissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
             ) { permissions: Map<String, Boolean> ->
@@ -86,143 +162,68 @@ class HYTInit : ComponentActivity() {
                 val internet: Boolean? = permissions[Manifest.permission.INTERNET];
                 val wakeLock: Boolean? = permissions[Manifest.permission.WAKE_LOCK];
                 val recordAudio: Boolean? = permissions[Manifest.permission.RECORD_AUDIO];
-                playbackGranted = playbackGranted
-                        || (modifyAudioSettings != null && modifyAudioSettings
+                playbackGranted = playbackGranted ||
+                        (modifyAudioSettings != null && modifyAudioSettings
                         && readExternalStorage != null && readExternalStorage
                         && foregroundService != null && foregroundService
                         && internet != null && internet
                         && wakeLock != null && wakeLock);
-                processingGranted = processingGranted
-                        || recordAudio != null && recordAudio;
+                processingGranted = (processingGranted || recordAudio != null && recordAudio);
             }
-            val title: String by derivedStateOf {
-                if (!playbackGranted) {
-                    "PLAYBACK PERMISSION"
-                } else if (!processingGranted) {
-                    "CAPTURE PERMISSION"
-                } else if (!policyAccepted) {
-                    "PRIVACY POLICY"
-                } else {
-                    ""
-                }
-            };
-            val content: AnnotatedString = buildAnnotatedString {
-                if (!playbackGranted) {
-                    append(stringResource(R.string.hyt_playback_permission))
-                } else if (!processingGranted) {
-                    val normalPart: String = stringResource(R.string.hyt_capture_permission);
-                    val origin: String = stringResource(R.string.hyt_capture_permission_note);
-                    append(normalPart);
-                    append(" ")
-                    append(origin);
-                    addStyle(
-                        style = SpanStyle(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = colorResource(R.color.hyt_white)
-                        ),
-                        start = normalPart.length,
-                        end = origin.length + normalPart.length
-                    );
-                } else if (!policyAccepted) {
-                    val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
-                    val part: String = "Privacy Policy";
-                    val start: Int = origin.indexOf(part);
-                    val end: Int = start + part.length
-                    append(origin);
-                    addStyle(
-                        style = SpanStyle(
-                            color = colorResource(R.color.hyt_grey),
-                            textDecoration = TextDecoration.Underline,
-                        ),
-                        start = start,
-                        end = end
-                    );
-                    addStringAnnotation(
-                        tag = "URL",
-                        annotation = stringResource(R.string.hyt_privacy_link),
-                        start = start,
-                        end = end
-                    );
-                } else {
-                    append("")
-                }
-            }
-            val launcher: () -> Unit by derivedStateOf {
-                if (!playbackGranted) {
-                    {
-                        permissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.MODIFY_AUDIO_SETTINGS,
-                                Manifest.permission.READ_EXTERNAL_STORAGE,
-                                Manifest.permission.FOREGROUND_SERVICE,
-                                Manifest.permission.INTERNET,
-                                Manifest.permission.WAKE_LOCK
+            DisposableEffect(popState) {
+                val auditor: HYTPopState.Companion.HYTAuditor = object :
+                    HYTPopState.Companion.HYTAuditor {
+
+                    override fun onAccept() {
+                        if (!playbackGranted) {
+                            permissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.MODIFY_AUDIO_SETTINGS,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    Manifest.permission.FOREGROUND_SERVICE,
+                                    Manifest.permission.INTERNET,
+                                    Manifest.permission.WAKE_LOCK
+                                )
                             )
-                        );
+                        } else if (!processingGranted) {
+                            permissionLauncher.launch(
+                                arrayOf(
+                                    Manifest.permission.RECORD_AUDIO
+                                )
+                            );
+                        } else if (!privacyAccepted) {
+                            privacyAccepted = true;
+                        }
                     }
-                } else if (!processingGranted) {
-                    {
-                        permissionLauncher.launch(
-                            arrayOf(
-                                Manifest.permission.RECORD_AUDIO
-                            )
-                        );
-                    }
-                } else if (!policyAccepted) {
-                    {
-                        policyAccepted = true;
-                    }
-                } else {
-                    {}
-                }
-            }
-            val origin: String = stringResource(R.string.hyt_privacy_policy_accept);
-            val contentClick: () -> Unit by derivedStateOf {
-                if (!policyAccepted) {
-                    {
-                        content.getStringAnnotations("URL", 0, origin.length)
-                            .firstOrNull()?.let { range: AnnotatedString.Range<String> ->
+
+                    override fun onClick() {
+                        if (!privacyAccepted) {
+                            processingContent.getStringAnnotations(
+                                "URL",
+                                0,
+                                origin.length + privacy.length
+                            ).firstOrNull()?.let { range: AnnotatedString.Range<String> ->
                                 uriHandler.openUri(range.item);
                             }
+                        }
                     }
-                } else {
-                    {}
-                }
-            };
 
-            if (playbackGranted && processingGranted && policyAccepted) {
-                getSharedPreferences(
-                    resources.getString(R.string.preferences),
-                    Context.MODE_PRIVATE
-                )
-                    .edit()
-                    .putBoolean(
-                        resources.getString(R.string.preferences_permissions),
-                        true
-                    )
-                    .commit();
-                startActivityIfNeeded(Intent(this, HYTApp::class.java), 100);
-                finish();
-            } else {
-                _permission(
-                    title = title,
-                    content = content,
-                    contentClick = contentClick
-                ) {
-                    launcher();
+                }
+                popState.addAuditor(auditor);
+                onDispose {
+                    popState.removeAuditor(auditor);
                 }
             }
+            _permission(
+                popState = popState
+            )
         }
     }
 
     @Composable
     private fun _permission(
-        title: String,
-        content: AnnotatedString,
-        confirm: String = "Accept",
-        contentClick: (() -> Unit)? = null,
+        popState: HYTPopState,
         modifier: Modifier = Modifier,
-        accept: () -> Unit
     ) {
         val context: Context = LocalContext.current;
         val paused: Boolean by produceState(
@@ -242,11 +243,7 @@ class HYTInit : ComponentActivity() {
                 paused = paused
             );
             pop(
-                title = title,
-                content = content,
-                contentClick = contentClick,
-                confirm = confirm,
-                accept = accept
+                state = popState
             );
         }
     }

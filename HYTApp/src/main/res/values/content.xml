@@ -9,6 +9,7 @@
     <string name="hyt_capture_permission_note">Note, that the application does not record any external noise or voices
         and does not collect or use any sensitive information.
     </string>
-    <string name="hyt_privacy_policy_accept">By using this app, you agree to the Privacy Policy</string>
+    <string name="hyt_privacy_policy_accept">By using this app, you agree to the </string>
+    <string name="hyt_privacy_policy_link">Privacy Policy</string>
     <string name="hyt_privacy_link">https://sites.google.com/view/bm-player/home</string>
 </resources>

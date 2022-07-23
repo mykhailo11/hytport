@@ -69,9 +69,9 @@ class HYTGLBaseProgram public constructor(
 
     override fun use(gl: GL10, resources: Map<HYTGLData, () -> Unit>) {
         GLES30.glUseProgram(_program);
-        _setUniforms(gl, _globalAttributes);
+        _setUniforms(_globalAttributes);
         resources.keys.forEach {
-            _setUniforms(gl, it.getStaticAttributes());
+            _setUniforms(it.getStaticAttributes());
             val vao: Int = it.getData();
             if (vao != 0) {
                 GLES30.glBindVertexArray(vao);
@@ -84,34 +84,32 @@ class HYTGLBaseProgram public constructor(
         }
     }
 
-    private fun _setUniforms(gl: GL10, attributes: Array<HYTGLStaticAttribute>): Unit {
-        if (attributes != null) {
-            attributes.forEach {
-                val location: Int = GLES30.glGetUniformLocation(_program, it.getName());
-                val data: FloatArray = (it.getStaticData() as Array<Float>).toFloatArray();
-                val dataSize: Int = it.getChunks();
-                when (it.getChunk()) {
-                    1 -> GLES30.glUniform1fv(
-                        location,
-                        dataSize,
-                        HYTGLUtil.getDirectFloatBuffer(data)
-                    )
-                    2 -> GLES30.glUniform2fv(
-                        location,
-                        dataSize,
-                        HYTGLUtil.getDirectFloatBuffer(data)
-                    )
-                    3 -> GLES30.glUniform3fv(
-                        location,
-                        dataSize,
-                        HYTGLUtil.getDirectFloatBuffer(data)
-                    )
-                    4 -> GLES30.glUniform4fv(
-                        location,
-                        dataSize,
-                        HYTGLUtil.getDirectFloatBuffer(data)
-                    )
-                }
+    private fun _setUniforms(attributes: Array<HYTGLStaticAttribute>): Unit {
+        attributes.forEach {
+            val location: Int = GLES30.glGetUniformLocation(_program, it.getName());
+            val data: FloatArray = (it.getStaticData() as Array<Float>).toFloatArray();
+            val dataSize: Int = it.getChunks();
+            when (it.getChunk()) {
+                1 -> GLES30.glUniform1fv(
+                    location,
+                    dataSize,
+                    HYTGLUtil.getDirectFloatBuffer(data)
+                )
+                2 -> GLES30.glUniform2fv(
+                    location,
+                    dataSize,
+                    HYTGLUtil.getDirectFloatBuffer(data)
+                )
+                3 -> GLES30.glUniform3fv(
+                    location,
+                    dataSize,
+                    HYTGLUtil.getDirectFloatBuffer(data)
+                )
+                4 -> GLES30.glUniform4fv(
+                    location,
+                    dataSize,
+                    HYTGLUtil.getDirectFloatBuffer(data)
+                )
             }
         }
     }

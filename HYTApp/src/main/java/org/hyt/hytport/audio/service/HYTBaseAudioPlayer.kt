@@ -2,6 +2,8 @@ package org.hyt.hytport.audio.service
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
@@ -28,11 +30,19 @@ class HYTBaseAudioPlayer public constructor(
 
     private val _context: Context;
 
+    private val _audio: AudioManager;
+
+    private val _request: AudioFocusRequest;
+
     private var _manager: HYTAudioManager? = null;
 
     private var _auditor: HYTAudioPlayer.Companion.HYTAuditor;
 
     private val _player: MediaPlayer;
+
+    private var _current: HYTAudioModel? = null;
+
+    private var _respect: Boolean = false;
 
     private var _prepared: Boolean = false;
 
@@ -42,13 +52,22 @@ class HYTBaseAudioPlayer public constructor(
 
     init {
         _context = context;
-        _auditor = _DEFAULT_AUDITOR;
+        _audio = context.getSystemService(AudioManager::class.java);
         _player = MediaPlayer();
-        _player.setOnCompletionListener {
-            _managerCheck { manager: HYTAudioManager ->
-                manager.current { audio: HYTAudioModel ->
-                    _auditor.onComplete(audio);
+        _auditor = _DEFAULT_AUDITOR;
+        _request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(_DEFAULT_AUDIO_ATTRIBUTES)
+            .setAcceptsDelayedFocusGain(true)
+            .setOnAudioFocusChangeListener { focus: Int ->
+                when {
+                    focus == AudioManager.AUDIOFOCUS_GAIN && !_player.isPlaying -> play();
+                    else -> pause();
                 }
+            }
+            .build();
+        _player.setOnCompletionListener {
+            if (_current != null) {
+                _auditor.onComplete(_current!!);
             }
         };
         _player.setOnErrorListener { _, _, _ ->
@@ -56,9 +75,7 @@ class HYTBaseAudioPlayer public constructor(
         }
         _player.setOnPreparedListener {
             _prepared = true;
-            if (!_player.isPlaying) {
-                _player.start();
-            }
+            play();
         };
         _executor = Executors.newSingleThreadScheduledExecutor();
         _progressWorker = {
@@ -70,21 +87,49 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun play() {
-        _managerCheck { manager: HYTAudioManager ->
-            manager.current { audio: HYTAudioModel ->
-                if (!_prepared) {
-                    _reset(audio);
-                } else if (!_player.isPlaying) {
-                    _player.start();
+        if (!_prepared && _current != null) {
+            _reset(_current!!);
+        } else if (!_player.isPlaying && _respect) {
+            _focus();
+        } else if (!_player.isPlaying) {
+            _player.start();
+            _current?.let { item: HYTAudioModel ->
+                current { current: Long ->
+                    _auditor.onPlay(item, current);
                 }
-                _auditor.onPlay(audio, if (_prepared) _player.currentPosition.toLong() else 0L);
             }
         }
+    }
+
+    override fun respectFocus(respect: Boolean) {
+        _audio.abandonAudioFocusRequest(_request);
+        _respect = respect;
+    }
+
+    private fun _focus(): Unit {
+        _audio.abandonAudioFocusRequest(_request);
+        if (
+            _respect
+            && _audio.requestAudioFocus(_request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+            && !_player.isPlaying
+        ) {
+            _player.start();
+            if (_current != null) {
+                current { current: Long ->
+                    _auditor.onPlay(_current!!, current);
+                }
+            }
+        }
+    }
+
+    override fun current(consumer: (Long) -> Unit) {
+        consumer(if (_prepared) _player.currentPosition.toLong() else 0L);
     }
 
     override fun play(audio: HYTAudioModel) {
         _managerCheck { manager: HYTAudioManager ->
             manager.current(audio);
+            _current = audio;
             _reset(audio);
             _auditor.onNext(audio);
         }
@@ -95,12 +140,13 @@ class HYTBaseAudioPlayer public constructor(
     }
 
     override fun pause() {
+        _audio.abandonAudioFocusRequest(_request);
         if (_prepared && _player.isPlaying) {
             _player.pause();
         }
-        _managerCheck { manager: HYTAudioManager ->
-            manager.current { audio: HYTAudioModel ->
-                _auditor.onPause(audio, if (_prepared) _player.currentPosition.toLong() else 0L);
+        if (_current != null) {
+            current { current: Long ->
+                _auditor.onPause(_current!!, current);
             }
         }
     }
@@ -126,6 +172,7 @@ class HYTBaseAudioPlayer public constructor(
     @Synchronized
     private fun _reset(audio: HYTAudioModel): Unit {
         _prepared = false;
+        _current = audio;
         _player.reset();
         _player.setDataSource(
             _context,
@@ -138,10 +185,14 @@ class HYTBaseAudioPlayer public constructor(
     override fun seek(to: Int) {
         if (_prepared) {
             _player.seekTo(to);
+            _current?.let { audio: HYTAudioModel ->
+                _auditor.onSeek(audio, audio.getDuration()?.toInt() ?: 0, to)
+            }
         }
     }
 
     override fun destroy() {
+        _audio.abandonAudioFocusRequest(_request);
         _auditor.onDestroy();
         _executor.shutdown();
         resetAuditor();
@@ -152,28 +203,39 @@ class HYTBaseAudioPlayer public constructor(
         _player.release();
     }
 
-    override fun manger(
+    override fun manager(
         empty: (() -> Unit)?,
         consumer: (HYTAudioManager) -> Unit
     ) {
         if (_manager != null) {
             consumer(_manager!!);
-        } else if (empty != null){
+        } else if (empty != null) {
             empty();
         }
     }
 
     override fun setManager(manager: HYTAudioManager) {
         _manager = manager;
-        _auditor.onSetManager(_manager!!);
+        if (!_player.isPlaying && _current == null) {
+            _manager!!.current { audio: HYTAudioModel? ->
+                _current = audio;
+                _auditor.onSetManager(_manager!!, _current);
+            }
+        } else {
+            manager.queue { queue: MutableList<HYTAudioModel> ->
+                val audio: HYTAudioModel? = queue.firstOrNull { audio: HYTAudioModel ->
+                    audio.getId() == _current?.getId();
+                }
+                manager.current(audio);
+            }
+            _auditor.onSetManager(_manager!!, _current);
+        }
     }
 
     override fun setAuditor(auditor: HYTAudioPlayer.Companion.HYTAuditor) {
         _auditor = auditor;
-        _managerCheck { manager: HYTAudioManager ->
-            manager.current { audio: HYTAudioModel ->
-                _auditor.onReady(audio);
-            }
+        current { current: Long ->
+            _auditor.onReady(_current, current);
         }
     }
 

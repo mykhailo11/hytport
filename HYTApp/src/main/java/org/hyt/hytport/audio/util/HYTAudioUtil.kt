@@ -50,8 +50,18 @@ class HYTAudioUtil {
                     PlaybackStateCompat.ACTION_PLAY or
                             PlaybackStateCompat.ACTION_PAUSE or
                             PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                            PlaybackStateCompat.ACTION_SEEK_TO
                 );
+            player.current { current: Long ->
+                player.isPlaying { playing: Boolean ->
+                    val state: Int = when {
+                        playing -> PlaybackStateCompat.STATE_PLAYING;
+                        else -> PlaybackStateCompat.STATE_PAUSED
+                    }
+                    playbackStateHolder.setState(state, current, 1.0f);
+                }
+            }
             val metadataHolder: MediaMetadataCompat.Builder = MediaMetadataCompat.Builder();
             mediaSession.setCallback(
                 object : MediaSessionCompat.Callback() {
@@ -60,15 +70,21 @@ class HYTAudioUtil {
                         player.play()
                     }
 
+                    override fun onSeekTo(positon: Long) {
+                        player.seek(positon.toInt());
+                    }
+
                     override fun onSkipToQueueItem(id: Long) {
-                        player.manger { manager: HYTAudioManager ->
+                        player.manager { manager: HYTAudioManager ->
                             manager.current(
                                 HYTAudioFactory.getAudioModel().apply {
                                     setId(id);
                                 }
                             );
-                            manager.current { current: HYTAudioModel ->
-                                player.play(current);
+                            manager.current { current: HYTAudioModel? ->
+                                if (current != null) {
+                                    player.play(current);
+                                }
                             }
                         }
                     }
