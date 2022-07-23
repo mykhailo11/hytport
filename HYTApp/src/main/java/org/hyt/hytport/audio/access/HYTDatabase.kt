@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase
 import org.hyt.hytport.audio.api.access.HYTQueueAccess
 import org.hyt.hytport.audio.api.model.HYTOrder
 import org.hyt.hytport.audio.api.model.HYTQueue
-import org.hyt.hytport.audio.api.model.HYTQueueOrder
 
 @Database(
     entities = [
