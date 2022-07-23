@@ -1,10 +1,8 @@
 #version 300 es
-#define SIZE 5
+#define SIZE 6
 
 uniform vec2 surface;
-uniform float pulseStates[SIZE];
 uniform float balanceStates[SIZE];
-uniform float parameters[3];
 uniform float time;
 
 void main(){
