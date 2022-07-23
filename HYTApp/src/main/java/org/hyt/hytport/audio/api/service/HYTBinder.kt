@@ -27,6 +27,8 @@ interface HYTBinder: HYTAudioPlayer, IBinder {
 
     fun getPlayer(consumer: (player: HYTAudioPlayer?) -> Unit): Unit;
 
-    suspend fun save(name: String): Unit;
+    suspend fun save(): Unit;
+
+    fun provider(consumer: (HYTQueueProvider) -> Unit);
 
 }
