@@ -6,9 +6,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.AssetManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.util.Size
+import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class HYTUtil {
 
@@ -23,6 +28,17 @@ class HYTUtil {
             }
         }
 
+        fun readByteSource(path: String, assets: AssetManager): ByteBuffer {
+            return assets.open(path).use {
+                val bytes: ByteArray = ByteArray(it.available());
+                it.read(bytes);
+                it.close();
+                ByteBuffer.allocateDirect(bytes.size)
+                    .order(ByteOrder.nativeOrder())
+                    .put(bytes);
+            }
+        }
+
         fun getBitmap(path: Uri?, resolver: ContentResolver): Bitmap?{
             if (path == null){
                 return null;
@@ -30,8 +46,12 @@ class HYTUtil {
             return try{
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P){
                     resolver.loadThumbnail(path, Size(800, 800), null);
-                }else{
-                    return null;
+                } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.P){
+                    val source = ImageDecoder.createSource(resolver, path);
+                    return ImageDecoder.decodeBitmap(source);
+                } else {
+                    val stream: InputStream? = resolver.openInputStream(path);
+                    return BitmapFactory.decodeStream(stream);
                 }
             }catch (exception: Exception){
                 null;
@@ -54,6 +74,20 @@ class HYTUtil {
             }.reduce { result: String, current: String ->
                 result + current
             } + ".*";
+        }
+
+        fun formatTime(time: Float): String {
+            val minutes: Int = (time / 60.0f).toInt().coerceIn(0, 99);
+            val seconds: Int = (time.toInt() % 60).coerceIn(0, 59);
+            val minutesPart: String = when {
+                minutes < 10 -> "0$minutes";
+                else -> "$minutes"
+            };
+            val secondsPart: String = when {
+                seconds < 10 -> "0$seconds";
+                else -> "$seconds";
+            };
+            return "$minutesPart:$secondsPart";
         }
 
     }
