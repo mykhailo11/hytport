@@ -4,15 +4,14 @@ import android.content.*
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.IBinder
+import android.view.Display
 import android.view.Window
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import org.hyt.hytport.R
-import org.hyt.hytport.audio.api.access.HYTAudioRepository
-import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
-import org.hyt.hytport.audio.factory.HYTAudioFactory
 import org.hyt.hytport.audio.service.HYTService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -23,10 +22,17 @@ abstract class HYTBaseActivity : ComponentActivity() {
 
     private var _executor: ScheduledExecutorService? = null;
 
+    protected var _rate: Float = 60.0f;
+
     protected lateinit var _preferences: SharedPreferences;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
+        val display: Display? = if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R)
+            (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay
+        else
+            display;
+        _rate = display?.refreshRate ?: 60.0f;
         _preferences = getSharedPreferences(
             resources.getString(R.string.preferences),
             Context.MODE_PRIVATE
@@ -38,7 +44,6 @@ abstract class HYTBaseActivity : ComponentActivity() {
             return;
         }
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        window.navigationBarColor = getColor(R.color.hyt_transparent);
         volumeControlStream = AudioManager.STREAM_MUSIC;
         _executor = Executors.newSingleThreadScheduledExecutor();
         val intent: Intent = Intent(this, HYTService::class.java);

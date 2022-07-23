@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector android:height="200dp"
+        android:viewportHeight="200" android:viewportWidth="200"
+        android:width="200dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    <path android:strokeWidth="3.0" android:strokeColor="@color/hyt_grey_transparent" android:pathData="M1.5 11.5 Q1.5 1.5 11.5 1.5 L187.0 1.5 Q197.0 1.5 197.0 11.5 L197.0 21.5 Q197.0 31.5 187.0 31.5 L11.5 31.5 Q1.5 31.5 1.5 21.5z"/>
+    <group android:pivotX="75.0" android:pivotY="15.0" android:translateY="162">
+        <path android:fillColor="@color/hyt_grey_transparent" android:pathData="M0.0 10.0 Q0.0 0.0 10.0 0.0 L60.0 0.0 Q70.0 0.0 70.0 10.0 L70.0 20.0 Q70.0 30.0 60.0 30.0 L10.0 30.0 Q0.0 30.0 0.0 20.0"/>
+        <group android:pivotY="15.0" android:pivotX="35.0" android:translateX="80.0">
+            <path android:fillColor="@color/hyt_grey" android:pathData="M0.0 10.0 Q0.0 0.0 10.0 0.0 L60.0 0.0 Q70.0 0.0 70.0 10.0 L70.0 20.0 Q70.0 30.0 60.0 30.0 L10.0 30.0 Q0.0 30.0 0.0 20.0"/>
+        </group>
+    </group>
+    <group android:pivotX="18.0" android:pivotY="18.0" android:translateY="50.0" android:translateX="10.0">
+        <path android:fillColor="@color/hyt_grey" android:pathData="M0.0 0.0 L36.0 0.0 L36.0 36.0 L0.0 36.0"/>
+        <path android:strokeColor="@color/hyt_grey" android:strokeWidth="5" android:pathData="M46.0 10.0 L156.0 10.0" android:strokeLineCap="round"/>
+        <path android:strokeColor="@color/hyt_grey" android:strokeWidth="4" android:pathData="M46.0 25.0 L96.0 25.0" android:strokeLineCap="round"/>
+    </group>
+    <group android:pivotX="18.0" android:pivotY="18.0" android:translateY="106.0" android:translateX="10.0">
+        <path android:fillColor="@color/hyt_grey_transparent" android:pathData="M-5.0 0.0 Q-5.0 -5.0 0.0 -5.0 L166.0 -5.0 Q171.0 -5.0 171.0 0.0 L171.0 36.0 Q171.0 41.0 166.0 41.0 L0.0 41.0 Q-5.0 41.0 -5.0 36.0"/>
+        <path android:fillColor="@color/hyt_grey" android:pathData="M0.0 0.0 L36.0 0.0 L36.0 36.0 L0.0 36.0"/>
+        <path android:strokeColor="@color/hyt_grey" android:strokeWidth="5" android:pathData="M46.0 10.0 L156.0 10.0" android:strokeLineCap="round"/>
+        <path android:strokeColor="@color/hyt_grey" android:strokeWidth="4" android:pathData="M46.0 25.0 L96.0 25.0" android:strokeLineCap="round"/>
+    </group>
+    <path android:strokeWidth="2.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="@color/hyt_accent" android:pathData="M107.0 124.0 L115.0 132.0 L123.0 124.0"/>
+    <path android:strokeWidth="2.0" android:strokeLineCap="round" android:strokeColor="@color/hyt_accent" android:pathData="M115.0 124.0 L115.0 75.0"/>
+    <path android:strokeWidth="2.0" android:strokeLineCap="round" android:strokeLineJoin="round" android:strokeColor="@color/hyt_accent" android:pathData="M107.0 73.0 L115.0 65.0 L123.0 73.0"/>
+
+</vector>

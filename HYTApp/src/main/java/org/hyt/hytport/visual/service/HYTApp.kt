@@ -1,36 +1,51 @@
 package org.hyt.hytport.visual.service
 
-import android.content.Context
-import android.content.Intent
+import android.app.Activity
+import android.content.*
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.os.IBinder
 import android.view.WindowManager
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.hyt.hytport.R
+import org.hyt.hytport.audio.api.model.HYTAudioManager
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
 import org.hyt.hytport.graphics.factory.HYTGLFactory
+import org.hyt.hytport.neural.service.HYTNeuralService
 import org.hyt.hytport.util.HYTMathUtil
 import org.hyt.hytport.util.HYTUtil
+import org.hyt.hytport.visual.api.model.HYTPlayerState
+import org.hyt.hytport.visual.api.model.HYTPopState
 import org.hyt.hytport.visual.api.model.HYTState
 import org.hyt.hytport.visual.component.loading.loadingIcon
 import org.hyt.hytport.visual.component.player.cover
 import org.hyt.hytport.visual.component.player.player
+import org.hyt.hytport.visual.component.player.rememberPlayerState
 import org.hyt.hytport.visual.component.surface.pop
+import org.hyt.hytport.visual.component.surface.rememberPopState
 import org.hyt.hytport.visual.component.surface.surface
+import org.hyt.hytport.visual.component.util.pressed
 import org.hyt.hytport.visual.factory.HYTStateFactory
 import java.util.concurrent.ScheduledExecutorService
 
@@ -38,7 +53,7 @@ class HYTApp : HYTBaseActivity() {
 
     companion object {
 
-        private val _STATES: Int = 6;
+        private val _STATES: Int = 5;
 
     }
 
@@ -50,25 +65,59 @@ class HYTApp : HYTBaseActivity() {
 
     private lateinit var _parameters: Array<HYTState>;
 
+    private var _preferencesAuditor: SharedPreferences.OnSharedPreferenceChangeListener? = null;
+
+    private var _neuralConnection: ServiceConnection? = null;
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        super.onCreate(savedInstanceState);
+        var neuralBinder: HYTNeuralService.Companion.HYTBinder? = null;
+        _neuralConnection = object : ServiceConnection {
+
+            override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+                neuralBinder = binder as HYTNeuralService.Companion.HYTBinder?;
+            }
+
+            override fun onServiceDisconnected(name: ComponentName?) {
+                neuralBinder = null;
+            }
+
+        }
+        bindService(
+            Intent(this, HYTNeuralService::class.java),
+            _neuralConnection!!,
+            Context.BIND_AUTO_CREATE
+        );
+        val speed: Float = 60.0f / _rate;
         val pulseStates: Array<HYTState> = Array(_STATES) {
-            HYTStateFactory.getPulseState(0.02f);
+            HYTStateFactory.getPulseState(0.015f * speed);
         };
         val balanceStates: Array<HYTState> = Array(_STATES) {
-            HYTStateFactory.getBalanceState(0.02f);
+            HYTStateFactory.getBalanceState(0.03f * speed);
         }
         _parameters = arrayOf(
-            HYTStateFactory.getBalanceState(0.04f)
+            HYTStateFactory.getBalanceState(0.04f),
+            HYTStateFactory.getBalanceState(0.01f * speed),
+            HYTStateFactory.getBalanceState(0.005f)
         );
         _consumer = { food: ByteArray ->
-            val result: Float = HYTMathUtil.getNormalBytesAverage(food);
+            val array: Array<Float> = HYTMathUtil.getNormalByteArray(food);
+            if (Math.random() > 0.9f) {
+                val prediction: Array<Float>? = neuralBinder?.predict(array);
+                val color: Float = prediction?.get(0) ?: 0.5f;
+                _parameters[2].setState(color);
+            }
+            val result: Float = HYTMathUtil.getNormalBytesAverage(array);
             val chosen: Int = (Math.random() * _STATES).toInt();
             balanceStates[chosen].setState(result);
-            if (result > 0.01) {
+            if (result > 0.02) {
                 pulseStates[chosen].setState(result);
             }
+            _parameters[1].setState(
+                pulseStates.maxOf { state: HYTState ->
+                    state.getState();
+                }
+            )
         }
         _canvas = HYTGLFactory.getCanvas(
             this,
@@ -85,6 +134,29 @@ class HYTApp : HYTBaseActivity() {
     @Composable
     override fun compose(player: HYTBinder, executor: ScheduledExecutorService) {
         val context: Context = LocalContext.current;
+        val activity: Activity = this;
+        val playerState: HYTPlayerState = rememberPlayerState();
+        DisposableEffect(playerState) {
+            val wakeLock: String = resources.getString(R.string.settings_wake_lock);
+            val expandLock: String = resources.getString(R.string.setting_show_expanded);
+            _preferencesAuditor = SharedPreferences.OnSharedPreferenceChangeListener { preferences: SharedPreferences,
+                                                                                       key: String ->
+                when {
+                    key == wakeLock && preferences.getBoolean(wakeLock, true)
+                        -> window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    key == wakeLock -> window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    key == expandLock -> playerState.lock(preferences.getBoolean(expandLock, false));
+                }
+            }
+            _preferences.registerOnSharedPreferenceChangeListener(_preferencesAuditor);
+            _preferencesAuditor?.onSharedPreferenceChanged(_preferences, wakeLock);
+            _preferencesAuditor?.onSharedPreferenceChanged(_preferences, expandLock);
+            onDispose {
+                if (_preferencesAuditor != null) {
+                    _preferences.unregisterOnSharedPreferenceChangeListener(_preferencesAuditor);
+                }
+            }
+        }
         val paused: Boolean by produceState(
             initialValue = false,
             context
@@ -93,14 +165,22 @@ class HYTApp : HYTBaseActivity() {
                 value = pause;
             }
         };
-        var visible: Boolean by remember { mutableStateOf(true) };
-        val opacity: Float by animateFloatAsState(if (visible) 1.0f else 0.0f);
-        var cover: Bitmap? by remember { mutableStateOf(null) };
+        var visible: Boolean by rememberSaveable { mutableStateOf(true) };
+        LaunchedEffect(visible) {
+            if (visible) {
+                _parameters[0].setState(0.0f)
+            } else {
+                _parameters[0].setState(1.0f)
+            }
+        }
         var instructor: Boolean by remember {
             mutableStateOf(
                 _preferences.getBoolean(resources.getString(R.string.preferences_instructor), true)
             )
         };
+        val instructorAnimation: Float by animateFloatAsState(if (instructor) 1.0f else 0.0f);
+        val opacity: Float by animateFloatAsState(if (visible || instructor) 1.0f - instructorAnimation else 0.0f);
+        var cover: Bitmap? by remember { mutableStateOf(null) };
         val auditor: HYTBinder.Companion.HYTAuditor by remember(player, context) {
             derivedStateOf {
                 object : HYTBinder.Companion.HYTAuditor {
@@ -109,8 +189,10 @@ class HYTApp : HYTBaseActivity() {
                         _consumer(food);
                     }
 
-                    override fun onReady(audio: HYTAudioModel) {
-                        cover = HYTUtil.getBitmap(audio.getAlbumPath(), context.contentResolver);
+                    override fun onReady(audio: HYTAudioModel?, current: Long) {
+                        if (audio != null) {
+                            cover = HYTUtil.getBitmap(audio.getAlbumPath(), context.contentResolver);
+                        }
                     }
 
                     override fun onNext(audio: HYTAudioModel) {
@@ -121,6 +203,9 @@ class HYTApp : HYTBaseActivity() {
                         cover = HYTUtil.getBitmap(audio.getAlbumPath(), context.contentResolver);
                     }
 
+                    override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel?) {
+                        cover = HYTUtil.getBitmap(audio?.getAlbumPath(), context.contentResolver);
+                    }
                 }
             }
         };
@@ -131,25 +216,39 @@ class HYTApp : HYTBaseActivity() {
             }
         }
         BoxWithConstraints(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            var pressed: Boolean by remember { mutableStateOf(false) };
+            val backColor: Color by animateColorAsState(
+                if (!pressed) colorResource(R.color.hyt_player_back)
+                else colorResource(R.color.hyt_player_back_press)
+            );
             surface(
                 renderer = _canvas,
-                click = {
-                    visible = !visible;
-                    if (visible) {
-                        _parameters[0].setState(0.0f)
-                    } else {
-                        _parameters[0].setState(1.0f)
+                paused = paused,
+                modifier = Modifier
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onPress = pressed(
+                                pressed = {
+                                    pressed = true;
+                                },
+                                react = {
+                                    pressed = false;
+                                }
+                            ),
+                            onLongPress = {
+                                startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
+                            },
+                            onTap = {
+                                visible = !visible || instructor;
+                            }
+                        )
                     }
-                },
-                longClick = {
-                    startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
-                },
-                paused = paused
             );
-            val animating: Boolean = visible || opacity > 0.0f
+            val animating: Boolean = (visible || opacity > 0.0f) && (instructorAnimation < 1.0f)
             val configuration: Configuration = LocalConfiguration.current;
             if (
                 animating
@@ -160,29 +259,29 @@ class HYTApp : HYTBaseActivity() {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .alpha(opacity)
+                        .alpha(opacity - instructorAnimation)
                         .background(
-                            color = colorResource(R.color.hyt_player_back)
+                            color = backColor
                         )
                         .fillMaxSize()
-                        .padding(50.dp)
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(30.dp)
                 ) {
                     cover(
                         album = cover
                     )
                     player(
                         player = player,
-                        longClick = {
-                            startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
-                        },
+                        playerState = playerState,
+                        activity = activity,
                         modifier = Modifier
                             .weight(
                                 weight = 1.0f,
-                                fill = true
+                                fill = false
                             )
                             .padding(
-                                horizontal = 50.dp,
-                                vertical = 0.dp
+                                start = 30.dp
                             )
                     );
                 }
@@ -193,63 +292,86 @@ class HYTApp : HYTBaseActivity() {
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+                    verticalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier
-                        .alpha(opacity)
+                        .alpha(opacity - instructorAnimation)
                         .background(
-                            color = colorResource(R.color.hyt_player_back)
+                            color = backColor
                         )
                         .fillMaxSize()
-                        .padding(50.dp)
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .padding(30.dp)
                 ) {
                     cover(
                         album = cover
                     )
                     player(
                         player = player,
-                        longClick = {
-                            startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
-                        },
+                        playerState = playerState,
+                        activity = activity,
                         modifier = Modifier
-                            .weight(
-                                weight = 1.0f,
-                                fill = true
-                            )
-                            .padding(20.dp)
+                            .weight(1.0f)
+                            .padding(10.dp)
                     );
                 }
             } else if (animating) {
-                player(
-                    player = player,
-                    longClick = {
-                        startActivityIfNeeded(Intent(context, HYTLibrary::class.java), 100);
-                    },
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .alpha(opacity)
-                        .background(
-                            color = colorResource(R.color.hyt_player_back)
-                        )
                         .fillMaxSize()
-                        .padding(50.dp)
-                );
+                        .background(
+                            color = backColor
+                        )
+                ) {
+                    player(
+                        player = player,
+                        playerState = playerState,
+                        activity = activity,
+                        modifier = Modifier
+                            .alpha(opacity - instructorAnimation)
+                            .fillMaxSize()
+                            .padding(30.dp)
+                    );
+                }
             }
-            val instructorAnimation: Float by animateFloatAsState(if (instructor) 1.0f else 0.0f);
             if (instructor || instructorAnimation > 0.0f) {
-                pop(
-                    title = remember { "WELCOME" },
-                    content = buildAnnotatedString {
+                val popState: HYTPopState = rememberPopState(
+                    initialTitle = remember { "Welcome" },
+                    initialConfirm = remember { "OK" },
+                    initialContent = buildAnnotatedString {
+                        pushStyle(
+                            SpanStyle(
+                                color = colorResource(R.color.hyt_white),
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        )
                         append("- tap on screen to view controls\n")
-                        append("- hold screen or play button to open library")
-                    },
-                    contentClick = null,
-                    confirm = remember { "OK" },
-                    accept = {
-                        _preferences
-                            .edit()
-                            .putBoolean(resources.getString(R.string.preferences_instructor), false)
-                            .apply();
-                        instructor = false;
-                    },
+                        append("- hold screen to open library")
+                        append("- hold play button to expand controls")
+                        pop();
+                    }
+                );
+                DisposableEffect(popState) {
+                    val auditor: HYTPopState.Companion.HYTAuditor = object:
+                        HYTPopState.Companion.HYTAuditor {
+
+                        override fun onAccept() {
+                            _preferences
+                                .edit()
+                                .putBoolean(resources.getString(R.string.preferences_instructor), false)
+                                .apply();
+                            instructor = false;
+                        }
+
+                    }
+                    popState.addAuditor(auditor);
+                    onDispose {
+                        popState.removeAuditor(auditor);
+                    }
+                }
+                pop(
+                    state = popState,
                     modifier = Modifier
                         .background(
                             color = colorResource(R.color.hyt_instructor_back)
@@ -280,7 +402,10 @@ class HYTApp : HYTBaseActivity() {
     }
 
     override fun onDestroy() {
-        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (_neuralConnection != null) {
+            unbindService(_neuralConnection!!);
+        }
         super.onDestroy();
     }
 }

@@ -1,10 +1,11 @@
 package org.hyt.hytport.visual.component.control
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,9 +13,11 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import org.hyt.hytport.R
 import org.hyt.hytport.audio.api.model.HYTAudioModel
 import org.hyt.hytport.audio.api.service.HYTBinder
+import org.hyt.hytport.visual.api.model.HYTControlState
 import org.hyt.hytport.visual.component.util.pressed
 
 @Composable
@@ -23,35 +26,47 @@ fun control(
     modifier: Modifier = Modifier,
     longClick: () -> Unit
 ) {
-    var playing: Boolean by remember(player) { mutableStateOf(false) };
+    val controlState: HYTControlState = rememberControlState(
+        next = painterResource(R.drawable.hyt_next_200dp),
+        nextActive = painterResource(R.drawable.hyt_next_press_200dp),
+        previous = painterResource(R.drawable.hyt_next_200dp),
+        previousActive = painterResource(R.drawable.hyt_next_press_200dp),
+        play = painterResource(R.drawable.hyt_pause_200dp),
+        playActive = painterResource(R.drawable.hyt_play_200dp),
+        playPress = painterResource(R.drawable.hyt_play_press_200dp)
+    );
     val auditor: HYTBinder.Companion.HYTAuditor by remember(player) {
         derivedStateOf {
             object : HYTBinder.Companion.HYTAuditor {
 
                 override fun onPlay(audio: HYTAudioModel, current: Long) {
-                    playing = true;
+                    controlState.play();
                 }
 
                 override fun onPause(audio: HYTAudioModel, current: Long) {
-                    playing = false;
+                    controlState.pause();
                 }
 
-                override fun onReady(audio: HYTAudioModel) {
-                    player.isPlaying {
-                        playing = it;
+                override fun onReady(audio: HYTAudioModel?, current: Long) {
+                    player.isPlaying { playing: Boolean ->
+                        if (playing) {
+                            controlState.play();
+                        } else {
+                            controlState.pause();
+                        }
                     }
                 }
 
                 override fun onDestroy() {
-                    playing = false;
+                    controlState.pause();
                 }
 
                 override fun onNext(audio: HYTAudioModel) {
-                    playing = true;
+                    controlState.play();
                 }
 
                 override fun onPrevious(audio: HYTAudioModel) {
-                    playing = true;
+                    controlState.play();
                 }
 
             }
@@ -65,87 +80,84 @@ fun control(
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.SpaceAround,
         modifier = Modifier
             .then(modifier)
+            .sizeIn(
+                maxHeight = 120.dp,
+                maxWidth = 500.dp
+            )
     ) {
-        var previousClicked: Boolean by remember { mutableStateOf(false) };
-        var nextClicked: Boolean by remember { mutableStateOf(false) };
         Image(
-            painter = painterResource(
-                if (previousClicked)
-                    R.drawable.hyt_next_press_200dp
-                else
-                    R.drawable.hyt_next_200dp
-            ),
+            painter = controlState.previousButton(),
             contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .rotate(180f)
                 .weight(1.0f)
+                .height(70.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = pressed(
                             pressed = {
-                                previousClicked = true;
+                                controlState.previous(true);
                                 player.previous();
                             },
-                            react = { up: Boolean ->
-                                previousClicked = !up;
+                            react = {
+                                controlState.previous(false);
                             }
                         )
                     )
                 }
         );
         Image(
-            painter = painterResource(
-                if (playing)
-                    R.drawable.hyt_play_200dp
-                else
-                    R.drawable.hyt_pause_200dp
-            ),
+            painter = controlState.playButton(),
             contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .weight(1.0f)
+                .height(70.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
+                        onPress = pressed(
+                            pressed = {
+                                controlState.press(true);
+                            },
+                            react = {
+                                controlState.press(false);
+                            }
+                        ),
                         onLongPress = {
                             longClick()
                         },
                         onTap = {
-                            if (playing) {
-                                player.pause();
-                            } else {
-                                player.play();
+                            player.isPlaying { playing: Boolean ->
+                                if (playing) {
+                                    player.pause();
+                                } else {
+                                    player.play();
+                                }
                             }
                         }
                     )
                 }
         );
         Image(
-            painter = painterResource(
-                if (nextClicked)
-                    R.drawable.hyt_next_press_200dp
-                else
-                    R.drawable.hyt_next_200dp
-            ),
+            painter = controlState.nextButton(),
             contentScale = ContentScale.Fit,
             contentDescription = null,
             modifier = Modifier
                 .weight(1.0f)
-                .clickable {
-                    player.next()
-                }
+                .height(70.dp)
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = pressed(
                             pressed = {
-                                nextClicked = true;
+                                controlState.next(true);
                                 player.next();
                             },
-                            react = { up: Boolean ->
-                                nextClicked = !up;
+                            react = {
+                                controlState.next(false);
                             }
                         )
                     )
