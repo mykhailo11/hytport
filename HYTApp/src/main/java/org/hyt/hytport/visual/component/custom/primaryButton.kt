@@ -1,43 +1,48 @@
 package org.hyt.hytport.visual.component.custom
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import org.hyt.hytport.R
-import org.hyt.hytport.visual.component.fonts
+import org.hyt.hytport.visual.component.montserrat
 
 @Composable
 fun primaryButton(
     text: String,
     modifier: Modifier = Modifier,
+    color: Color = colorResource(R.color.hyt_grey),
+    round: Int = 30,
+    textColor: Color = colorResource(R.color.hyt_white),
+    long: (() -> Unit)? = null,
     click: () -> Unit
 ) {
     Text(
         text = text,
-        fontFamily = fonts,
-        color = colorResource(R.color.hyt_black),
+        textAlign = TextAlign.Center,
+        fontFamily = montserrat,
+        color = textColor,
         modifier = Modifier
-            .then(modifier)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = click
-            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        long?.invoke()
+                    },
+                    onTap = {
+                        click()
+                    }
+                )
+            }
             .background(
-                color = colorResource(R.color.hyt_accent),
-                shape = RoundedCornerShape(30)
+                color = color,
+                shape = RoundedCornerShape(round)
             )
-            .padding(
-                horizontal = 40.dp,
-                vertical = 15.dp
-            )
+            .then(modifier)
     );
 }
