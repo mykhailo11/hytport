@@ -31,10 +31,10 @@ class HYTWrapperBinder(
         _auditors = ArrayList();
         _auditor = object : HYTAudioPlayer.Companion.HYTAuditor {
 
-            override fun onReady(audio: HYTAudioModel) {
+            override fun onReady(audio: HYTAudioModel?, current: Long) {
                 _executor.submit {
                     _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
-                        auditor.onReady(audio);
+                        auditor.onReady(audio, current);
                     }
                 }
             }
@@ -88,10 +88,18 @@ class HYTWrapperBinder(
                 }
             }
 
-            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
+            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel?) {
                 _executor.submit {
                     _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
                         auditor.onSetManager(manager, audio);
+                    }
+                }
+            }
+
+            override fun onSeek(audio: HYTAudioModel, duration: Int, to: Int) {
+                _executor.submit {
+                    _auditors.forEach { auditor: HYTAudioPlayer.Companion.HYTAuditor ->
+                        auditor.onSeek(audio, duration, to);
                     }
                 }
             }
@@ -126,6 +134,12 @@ class HYTWrapperBinder(
         );
         _visualizer.scalingMode = Visualizer.SCALING_MODE_AS_PLAYED;
         _visualizer.enabled = true;
+    }
+
+    override fun current(consumer: (Long) -> Unit) {
+        _playerCheck { player: HYTAudioPlayer ->
+            player.current(consumer);
+        }
     }
 
     override fun play() {
@@ -170,6 +184,10 @@ class HYTWrapperBinder(
         }
     }
 
+    override fun respectFocus(respect: Boolean) {
+        _player?.respectFocus(respect);
+    }
+
     override fun destroy() {
         _executor.shutdown();
         _visualizer.enabled = false;
@@ -208,8 +226,10 @@ class HYTWrapperBinder(
         _auditors.add(auditor);
         _playerCheck { player: HYTAudioPlayer ->
             player.manager { manager: HYTAudioManager ->
-                manager.current { audio: HYTAudioModel ->
-                    auditor.onReady(audio);
+                manager.current { audio: HYTAudioModel? ->
+                    player.current { current: Long ->
+                        auditor.onReady(audio, current);
+                    }
                 }
             }
         }
@@ -239,11 +259,10 @@ class HYTWrapperBinder(
         }
     }
 
-    override suspend fun save(name: String) {
+    override suspend fun save() {
         _player?.manager { manager: HYTAudioManager ->
             runBlocking {
                 _provider.save(
-                    name,
                     manager
                 ) { saved: HYTAudioManager ->
                     _auditors.forEach { auditor: HYTBinder.Companion.HYTAuditor ->
@@ -252,6 +271,10 @@ class HYTWrapperBinder(
                 }
             }
         }
+    }
+
+    override fun provider(consumer: (HYTQueueProvider) -> Unit) {
+        consumer(_provider);
     }
 
 }

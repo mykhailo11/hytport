@@ -49,28 +49,28 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
     }
 
     override fun getAllAudio(ready: (MutableList<HYTAudioModel>) -> Unit): Unit {
-        ready(_getAudio(
-            _QUERY_IS_MUSIC,
-            null,
-            _getStorage()
-        ));
+        ready(
+            _getAudio(
+                _QUERY_IS_MUSIC,
+                null,
+                _getStorage()
+            )
+        );
     }
 
     override fun getAudioById(id: Any, ready: (HYTAudioModel?) -> Unit): Unit {
         val parameters: Array<String> = arrayOf(id.toString());
-        ready(_getAudio(
-            _QUERY__ID,
-            parameters,
-            _getStorage()
-        ).first());
+        ready(
+            _getAudio(
+                _QUERY__ID,
+                parameters,
+                _getStorage()
+            ).first()
+        );
     }
 
-    private fun _getStorage(): Uri{
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        }else{
-            return MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        }
+    private fun _getStorage(): Uri {
+        return MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     }
 
     private fun _getAudio(
@@ -103,27 +103,18 @@ class HYTBaseAudioRepository public constructor(resolver: ContentResolver) : HYT
                 audio.setArtist(cursor.getString(artistColumn));
                 audio.setAlbum(cursor.getString(albumColumn));
                 audio.setOrder(cursor.getInt(dateColumn));
-                val albumCursor: Cursor? = _resolver.query(
-                    storage,
-                    arrayOf(MediaStore.Audio.Albums._ID),
-                    _QUERY__ID,
-                    arrayOf(cursor.getLong(albumIdColumn).toString()),
-                    null
-                );
-                if (albumCursor != null && albumCursor.moveToFirst()){
+                audio.setDuration(cursor.getLong(durationColumn));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    audio.setPath(Uri.parse("file://${cursor.getString(dataColumn)}"));
+
+                } else {
+                    audio.setPath(ContentUris.withAppendedId(storage, id));
                     audio.setAlbumPath(
                         ContentUris.withAppendedId(
-                            storage,
-                            cursor.getLong(albumCursor.getColumnIndex(MediaStore.Audio.Albums._ID))
+                            MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+                            cursor.getLong(albumIdColumn)
                         )
                     );
-                }
-                audio.setDuration(cursor.getLong(durationColumn));
-
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
-                    audio.setPath(Uri.parse("file://" + cursor.getString(dataColumn)));
-                }else{
-                    audio.setPath(ContentUris.withAppendedId(storage, id));
                 }
                 items.add(audio);
             } while (cursor.moveToNext());

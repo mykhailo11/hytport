@@ -11,10 +11,34 @@ interface HYTQueueProvider {
 
     suspend fun mainstream(consumer: (List<HYTAudioModel>) -> Unit): Unit;
 
+    suspend fun new(consumer: (List<HYTAudioModel>) -> Unit): Unit;
+
     suspend fun save(
-        name: String,
         manager: HYTAudioManager,
         saved: ((HYTAudioManager) -> Unit)? = null
     ): Unit;
+
+    suspend fun save(
+        name: String,
+        vararg tracks: HYTAudioModel,
+        saved: ((List<HYTAudioModel>) -> Unit)? = null
+    ): Unit;
+
+    suspend fun add(
+        name: String,
+        vararg tracks: HYTAudioModel,
+        saved: ((List<HYTAudioModel>) -> Unit)? = null
+    )
+
+    suspend fun edit(
+        name: String,
+        new: String,
+        saved: ((Boolean) -> Unit)? = null
+    )
+
+    suspend fun remove(
+        name: String,
+        saved: (() -> Unit)? = null
+    );
 
 }

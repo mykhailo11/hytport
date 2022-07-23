@@ -4,18 +4,24 @@ interface HYTAudioManager {
 
     fun shuffle(shuffle: Boolean): Unit;
 
+    fun loop(loop: Boolean): Unit;
+
+    fun loop(consumer: (Boolean) -> Unit);
+
     fun shuffle(consumer: (Boolean) -> Unit);
 
     fun next(consumer: (HYTAudioModel) -> Unit): Unit;
 
     fun previous(consumer: (HYTAudioModel) -> Unit): Unit;
 
-    fun current(audio: HYTAudioModel): Unit;
+    fun current(audio: HYTAudioModel?): Unit;
 
-    fun current(consumer: (HYTAudioModel) -> Unit);
+    fun current(consumer: (HYTAudioModel?) -> Unit);
 
     fun queue(
         consumer: (MutableList<HYTAudioModel>) -> Unit
     ): Unit;
+
+    fun name(): String;
 
 }

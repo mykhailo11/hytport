@@ -2,7 +2,9 @@ package org.hyt.hytport.audio.service
 
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.BitmapFactory
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
@@ -27,6 +29,7 @@ import org.hyt.hytport.audio.factory.HYTAudioPlayerFactory
 import org.hyt.hytport.audio.factory.HYTQueueFactory
 import org.hyt.hytport.audio.util.HYTAudioUtil
 import org.hyt.hytport.util.HYTUtil
+import org.hyt.hytport.visual.service.HYTApp
 
 class HYTService : LifecycleService() {
 
@@ -43,6 +46,10 @@ class HYTService : LifecycleService() {
     private var _destroyIntent: String? = null;
 
     private var _mainstream: String? = null;
+
+    private var _preferences: SharedPreferences? = null;
+
+    private var _preferencesAuditor: SharedPreferences.OnSharedPreferenceChangeListener? = null;
 
     private var _queueProvider: HYTQueueProvider? = null;
 
@@ -65,11 +72,23 @@ class HYTService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate();
+        _preferences = getSharedPreferences(
+            resources.getString(R.string.preferences),
+            Context.MODE_PRIVATE
+        );
+        val respect: String = resources.getString(R.string.settings_audio_focus);
         _queueProvider = HYTQueueFactory.getQueueProvider(
             HYTAudioFactory.getAudioRepository(contentResolver),
             HYTDatabase(this)
         );
         _binder = HYTAudioFactory.getBinder(_queueProvider!!);
+        _preferencesAuditor = SharedPreferences.OnSharedPreferenceChangeListener { preferences: SharedPreferences,
+                                                                                   key: String ->
+            if (key == respect) {
+                _binder.respectFocus(preferences.getBoolean(respect, true));
+            }
+        };
+        _preferences?.registerOnSharedPreferenceChangeListener(_preferencesAuditor);
         _playIntent = resources.getString(R.string.hyt_service_play);
         _nextIntent = resources.getString(R.string.hyt_service_next);
         _previousIntent = resources.getString(R.string.hyt_service_previous);
@@ -79,6 +98,7 @@ class HYTService : LifecycleService() {
             this,
             _binder
         );
+
         val id: String = resources.getString(R.string.hyt_channel);
         _notificationEditor = HYTAudioUtil.notification(
             this,
@@ -87,18 +107,29 @@ class HYTService : LifecycleService() {
         );
         _auditor = object : HYTBinder.Companion.HYTAuditor {
 
-            override fun onReady(audio: HYTAudioModel) {
-                _setMetadata(audio);
-                _setNotification(audio);
+            override fun onReady(audio: HYTAudioModel?, current: Long) {
+                if (audio != null) {
+                    _reset(audio);
+                }
             }
 
             override fun onNext(audio: HYTAudioModel) {
-                _setMetadata(audio);
+                _reset(audio);
+                _setPlayback(
+                    duration = audio.getDuration()?.toInt() ?: 0,
+                    current = 0,
+                    state = PlaybackStateCompat.STATE_PLAYING
+                );
                 _setNotification(audio);
             }
 
             override fun onPrevious(audio: HYTAudioModel) {
-                _setMetadata(audio);
+                _reset(audio);
+                _setPlayback(
+                    duration = audio.getDuration()?.toInt() ?: 0,
+                    current = 0,
+                    state = PlaybackStateCompat.STATE_PLAYING
+                );
                 _setNotification(audio);
             }
 
@@ -106,9 +137,59 @@ class HYTService : LifecycleService() {
                 _player!!.next();
             }
 
-            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel) {
+            override fun onSetManager(manager: HYTAudioManager, audio: HYTAudioModel?) {
+                if (audio != null) {
+                    _reset(audio);
+                }
+            }
+
+            private fun _reset(audio: HYTAudioModel): Unit {
                 _setMetadata(audio);
                 _setNotification(audio);
+            }
+
+            override fun onPlay(audio: HYTAudioModel, current: Long) {
+                _setPlayback(
+                    duration = audio.getDuration()?.toInt() ?: 0,
+                    current = current.toInt(),
+                    state = PlaybackStateCompat.STATE_PLAYING
+                );
+                _setNotification(audio);
+            }
+
+            override fun onPause(audio: HYTAudioModel, current: Long) {
+                _setPlayback(
+                    duration = audio.getDuration()?.toInt() ?: 0,
+                    current = current.toInt(),
+                    state = PlaybackStateCompat.STATE_PAUSED
+                );
+                _setNotification(audio);
+            }
+
+            override fun onSeek(audio: HYTAudioModel, duration: Int, to: Int) {
+                _player?.isPlaying { playing: Boolean ->
+                    val state: Int = when {
+                        playing -> PlaybackStateCompat.STATE_PLAYING;
+                        else -> PlaybackStateCompat.STATE_PAUSED
+                    }
+                    _setPlayback(
+                        duration = duration,
+                        current = to,
+                        state = state
+                    );
+                    _setNotification(audio);
+                }
+            }
+
+            private fun _setPlayback(duration: Int, current: Int, state: Int): Unit {
+                _mediaSessionEditor { mediaSession,
+                                      playbackState,
+                                      metadataHolder ->
+                    playbackState.setState(state, current.toLong(), 1.0f)
+                    metadataHolder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration.toLong());
+                    mediaSession.setPlaybackState(playbackState.build());
+                    mediaSession.setMetadata(metadataHolder.build());
+                }
             }
 
             private fun _setMetadata(audio: HYTAudioModel): Unit {
@@ -125,6 +206,7 @@ class HYTService : LifecycleService() {
                         )
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, -1L)
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, audio.getAlbumPath()?.path)
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, audio.getDuration() ?: 0L);
                     mediaSession.setMetadata(
                         metadataHolder.build()
                     )
@@ -147,22 +229,21 @@ class HYTService : LifecycleService() {
         _player = HYTAudioPlayerFactory.getAudioPlayer(this);
         _binder.setPlayer(_player!!);
         _binder.addAuditor(_auditor);
+        _preferencesAuditor?.onSharedPreferenceChanged(_preferences, respect);
         lifecycleScope.launch {
-            _queueProvider!!.getAll { queues: List<String> ->
+            _queueProvider!!.getByName(_mainstream!!) { manager: HYTAudioManager ->
                 runBlocking {
-                    _queueProvider!!.getByName(_mainstream!!) { manager: HYTAudioManager ->
-                        if (queues.contains(_mainstream!!)) {
-                            _player?.setManager(manager);
-                        } else {
-                            runBlocking {
-                                _queueProvider!!.mainstream { items: List<HYTAudioModel> ->
-                                    manager.queue { queue: MutableList<HYTAudioModel> ->
-                                        queue.addAll(items);
-                                        manager.next { };
-                                        _player?.setManager(manager);
-                                    }
-                                }
+                    _queueProvider!!.new { items: List<HYTAudioModel> ->
+                        manager.queue { queue: MutableList<HYTAudioModel> ->
+                            val setNext: Boolean = queue.isEmpty();
+                            queue.addAll(
+                                0,
+                                items
+                            );
+                            if (setNext) {
+                                manager.next { };
                             }
+                            _player?.setManager(manager);
                         }
                     }
                 }
@@ -171,12 +252,24 @@ class HYTService : LifecycleService() {
         val destroyIntent: PendingIntent = HYTUtil.wrapIntentForService(
             this, Intent(_destroyIntent)
         );
+        val open: Intent = Intent(this, HYTApp::class.java)
+            .apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            };
+        val openIntent: PendingIntent = PendingIntent.getActivity(
+            this,
+            100,
+            open,
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
+        );
         _mediaSessionEditor { mediaSession: MediaSessionCompat,
                               _, _ ->
             _notificationEditor { notificationHolder: NotificationCompat.Builder, _ ->
                 notificationHolder
                     .setLargeIcon(BitmapFactory.decodeResource(resources, R.drawable.hyt_empty_cover_200dp))
                     .setDeleteIntent(destroyIntent)
+                    .setContentIntent(openIntent)
                     .setStyle(
                         DecoratedMediaCustomViewStyle()
                             .setShowCancelButton(true)
@@ -247,11 +340,10 @@ class HYTService : LifecycleService() {
     }
 
     override fun onDestroy() {
-        if (_mainstream != null) {
-            runBlocking {
-                _binder.save(_mainstream!!);
-            }
+        runBlocking {
+            _binder.save();
         }
+        _preferences?.unregisterOnSharedPreferenceChangeListener(_preferencesAuditor);
         _binder.removeAuditor(_auditor);
         _binder.destroy();
         _player?.destroy();

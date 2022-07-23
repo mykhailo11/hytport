@@ -12,8 +12,11 @@ class HYTQueueFactory {
 
     companion object {
 
-        fun getManager(queue: MutableList<HYTAudioModel>): HYTAudioManager {
-            return HYTBaseAudioManager(queue);
+        fun getManager(
+            queue: MutableList<HYTAudioModel>,
+            name: String
+        ): HYTAudioManager {
+            return HYTBaseAudioManager(queue, name);
         }
 
         fun getQueueProvider(
