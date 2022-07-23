@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="vertex_shader">HYTCanvas.glsl</string>
-    <string name="fragment_shader">HYTView.glsl</string>
+    <string name="fragment_shader">HYTView1.glsl</string>
+    <string name="library_vertex_shader">HYTLibraryCanvas.glsl</string>
+    <string name="library_shader">HYTLibrary.glsl</string>
+    <string name="settings_vertex_shader">HYTSettingsCanvas.glsl</string>
+    <string name="settings_shader">HYTSettings.glsl</string>
     <string name="init_shader">HYTInit.glsl</string>
     <string name="init_vertex_shader">HYTInitCanvas.glsl</string>
     <string name="pulse_states">pulseStates</string>

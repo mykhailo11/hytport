@@ -22,23 +22,44 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/hyt_icon_round"
             android:supportsRtl="true"
-            android:theme="@style/Theme.Hytport">
+            android:theme="@style/Hytport">
         <activity
                 android:name="org.hyt.hytport.visual.service.HYTInit"
-                android:exported="true">
+                android:exported="true"
+                android:launchMode="singleTask"
+        >
             <intent-filter>
                 <action android:name="org.hyt.hytport.PERMISSION"/>
             </intent-filter>
         </activity>
+
         <activity
                 android:name="org.hyt.hytport.visual.service.HYTLibrary"
-                android:exported="true">
+                android:exported="true"
+                android:launchMode="singleTask"
+                android:theme="@style/HytportSmall"
+        >
             <intent-filter>
                 <action android:name="org.hyt.hytport.LIBRARY"/>
             </intent-filter>
         </activity>
 
-        <activity android:exported="true" android:name="org.hyt.hytport.visual.service.HYTApp">
+        <activity
+                android:name="org.hyt.hytport.visual.service.HYTSettings"
+                android:exported="true"
+                android:launchMode="singleTask"
+                android:theme="@style/HytportSmall"
+        >
+            <intent-filter>
+                <action android:name="org.hyt.hytport.SETTINGS"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:exported="true"
+                android:name="org.hyt.hytport.visual.service.HYTApp"
+                android:launchMode="singleTask"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -57,6 +78,8 @@
                 <action android:name="org.hyt.hytport.DESTROY"/>
             </intent-filter>
         </service>
+        <service android:name=".neural.service.HYTNeuralService"
+                 android:enabled="true"/>
     </application>
 
 </manifest>

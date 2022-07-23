@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_wake_lock">settings_wake_lock</string>
+    <string name="settings_audio_focus">settings_audio_focus</string>
+    <string name="setting_show_expanded">settings_show_expanded</string>
+</resources>
