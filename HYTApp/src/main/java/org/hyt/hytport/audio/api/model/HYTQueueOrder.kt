@@ -1,6 +1,7 @@
 package org.hyt.hytport.audio.api.model
 
-import androidx.room.*
+import androidx.room.Embedded
+import androidx.room.Relation
 
 data class HYTQueueOrder(
     @Embedded val queue: HYTQueue,
