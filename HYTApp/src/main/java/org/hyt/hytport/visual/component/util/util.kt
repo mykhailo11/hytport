@@ -4,11 +4,11 @@ import androidx.compose.foundation.gestures.PressGestureScope
 import androidx.compose.ui.geometry.Offset
 
 fun pressed(
-    pressed: () -> Unit,
+    pressed: (Offset) -> Unit,
     react: (Boolean) -> Unit
 ): suspend PressGestureScope.(Offset) -> Unit {
-    return {
-        pressed();
+    return { offset: Offset ->
+        pressed(offset);
         val up = try {
             tryAwaitRelease()
         } catch (exception: Exception) {
