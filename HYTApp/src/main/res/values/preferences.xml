@@ -3,4 +3,5 @@
     <string name="preferences">preferences</string>
     <string name="preferences_permissions">permissions</string>
     <string name="preferences_instructor">instructor</string>
+    <string name="preferences_library_instructor">library_instructor</string>
 </resources>
