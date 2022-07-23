@@ -69,13 +69,14 @@ class HYTRemoteAudioRepository public constructor(
                     audios.add(
                         HYTAudioFactory.getAudioModel().apply {
                             val id: Long = jsonAudio.optLong("id");
+                            val audioPath: Uri = Uri.parse("${_base}/${id}");
                             setId(id);
                             setTitle(jsonAudio.optString("title"));
                             setArtist(jsonAudio.optString("artist"));
                             setAlbum(jsonAudio.optString("album"));
                             setDuration(jsonAudio.optLong("duration"));
                             setAlbumPath(Uri.parse(jsonAudio.optString("albumPath")));
-                            setPath(Uri.parse("/${id}"));
+                            setPath(audioPath);
                         }
                     );
                 }
